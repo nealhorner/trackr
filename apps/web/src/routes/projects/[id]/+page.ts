@@ -8,7 +8,12 @@ export const load: PageLoad = async ({ fetch, params }) => {
   if (!r.ok) throw error(r.status, "Failed to load project");
   const j = (await r.json()) as {
     data: {
-      project: { id: number; name: string; organizationId: number; createdAt: string };
+      project: {
+        id: number;
+        name: string;
+        organizationId: number;
+        createdAt: string;
+      };
     };
   };
   return { project: j.data.project };

@@ -7,15 +7,16 @@ import { hashSessionToken } from "../lib/session-crypto";
 
 export const SESSION_COOKIE = "trackr_session";
 
-function extractBearer(c: { req: { header: (n: string) => string | undefined } }) {
+function extractBearer(c: {
+  req: { header: (n: string) => string | undefined };
+}) {
   const h = c.req.header("Authorization");
   if (!h?.startsWith("Bearer ")) return undefined;
   return h.slice(7).trim();
 }
 
 export const loadSession = createMiddleware(async (c, next) => {
-  const raw =
-    extractBearer(c) ?? getCookie(c, SESSION_COOKIE) ?? undefined;
+  const raw = extractBearer(c) ?? getCookie(c, SESSION_COOKIE) ?? undefined;
   if (!raw) {
     c.set("authUser", null);
     return next();

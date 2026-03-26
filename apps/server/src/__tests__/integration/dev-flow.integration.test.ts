@@ -18,7 +18,9 @@ describe.skipIf(process.env.RUN_INTEGRATION !== "true")(
         body: JSON.stringify({ email: "admin@example.com" }),
       });
       expect(login.status).toBe(200);
-      const cookie = sessionCookieFromSetCookie(login.headers.get("set-cookie"));
+      const cookie = sessionCookieFromSetCookie(
+        login.headers.get("set-cookie"),
+      );
       expect(cookie).toContain("trackr_session=");
 
       const projects = await app.request("/api/v1/projects", {

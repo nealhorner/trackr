@@ -11,7 +11,12 @@ export const load: PageLoad = async ({ fetch, params }) => {
       board: {
         id: number;
         projectId: number;
-        columns: Array<{ id: number; key: string; name: string; position: number }>;
+        columns: Array<{
+          id: number;
+          key: string;
+          name: string;
+          position: number;
+        }>;
       };
       tickets: Array<{
         id: number;

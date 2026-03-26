@@ -76,13 +76,7 @@ authRoutes.post("/dev-login", async (c) => {
       });
 
   if (!user) {
-    return jsonError(
-      c,
-      "not_found",
-      "User not found",
-      404,
-      getRequestId(c),
-    );
+    return jsonError(c, "not_found", "User not found", 404, getRequestId(c));
   }
 
   const raw = generateSessionToken();

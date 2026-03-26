@@ -10,7 +10,8 @@ export const load: PageLoad = async ({ fetch, params }) => {
 
   if (ticketRes.status === 404) throw error(404, "Ticket not found");
   if (!ticketRes.ok) throw error(ticketRes.status, "Failed to load ticket");
-  if (!commentsRes.ok) throw error(commentsRes.status, "Failed to load comments");
+  if (!commentsRes.ok)
+    throw error(commentsRes.status, "Failed to load comments");
 
   const ticketJson = (await ticketRes.json()) as {
     data: {

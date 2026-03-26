@@ -101,13 +101,13 @@ Prisma 7 uses separate schema files for **PostgreSQL** (server) and **SQLite** (
 
 From the repo root after `npm install`:
 
-| Command                                    | What it does                                                                                              |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `npm run build -w @trackr/prisma`          | `prisma generate` for **both** Postgres and SQLite clients                                                |
-| `npm run migrate:dev -w @trackr/prisma`    | Create/apply Postgres migrations in dev (`DATABASE_URL` must point at Postgres; uses `prisma.config.ts`)  |
-| `npm run migrate:deploy -w @trackr/prisma` | Apply Postgres migrations (CI/production-style)                                                           |
-| `npm run db:push:sqlite -w @trackr/prisma` | SQLite `db push` for local desktop iteration (uses `file:./.local/trackr.sqlite` under `packages/prisma`) |
-| `npm run seed -w @trackr/prisma` | Seed dev tenant, org, project, board columns, and users (`admin@example.com`, `dev@example.com`) — requires Postgres reachable via `DATABASE_URL` and migrations applied |
+| Command                                    | What it does                                                                                                                                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run build -w @trackr/prisma`          | `prisma generate` for **both** Postgres and SQLite clients                                                                                                               |
+| `npm run migrate:dev -w @trackr/prisma`    | Create/apply Postgres migrations in dev (`DATABASE_URL` must point at Postgres; uses `prisma.config.ts`)                                                                 |
+| `npm run migrate:deploy -w @trackr/prisma` | Apply Postgres migrations (CI/production-style)                                                                                                                          |
+| `npm run db:push:sqlite -w @trackr/prisma` | SQLite `db push` for local desktop iteration (uses `file:./.local/trackr.sqlite` under `packages/prisma`)                                                                |
+| `npm run seed -w @trackr/prisma`           | Seed dev tenant, org, project, board columns, and users (`admin@example.com`, `dev@example.com`) — requires Postgres reachable via `DATABASE_URL` and migrations applied |
 
 Full workflow notes: [`docs/phases/phase-0-foundations.md`](docs/phases/phase-0-foundations.md) (database section and stack decision links).
 
