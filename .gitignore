@@ -1,19 +1,31 @@
-node_modules
+# Dependencies
+node_modules/
 
-# Build and test artifacts (match turbo.json outputs: dist/**, coverage/**)
+# Secrets and local overrides (commit `.env.example` templates only)
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / test artifacts (align with turbo.json: dist/**, build/**, .svelte-kit/**, coverage/**, generated/**)
 dist/
+build/
 coverage/
+.svelte-kit/
 
-turbo-build.log
-turbo-test.log
-turbo-lint.log
-turbo-e2e.log
-.turbo/cache/
+# Turborepo (cache + per-package logs)
+.turbo/
+turbo-*.log
 
-# Prisma generated clients (run `npm run build -w @trackr/prisma`)
+# Playwright (default output dirs when reports/traces are enabled)
+playwright-report/
+test-results/
+
+# Prisma: generated clients and local SQLite working dirs
 packages/prisma/generated/
-
-# Local SQLite files used by Prisma CLI / desktop dev
 packages/prisma/.local/
 *.db
 *.db-journal
