@@ -84,7 +84,7 @@ PORT=4000 npm run dev -w @trackr/server
 Useful URLs while it is running:
 
 - `http://localhost:3000/health` — JSON health check
-- `http://localhost:3000/` — temporary HTML UI-shell placeholder (Phase 0 scaffolding)
+- `http://localhost:3000/` — legacy HTML shell smoke page; primary UI is SvelteKit (`apps/web`)
 
 ### Run all workspace tasks from the root
 
@@ -107,8 +107,19 @@ From the repo root after `npm install`:
 | `npm run migrate:dev -w @trackr/prisma`    | Create/apply Postgres migrations in dev (`DATABASE_URL` must point at Postgres; uses `prisma.config.ts`)  |
 | `npm run migrate:deploy -w @trackr/prisma` | Apply Postgres migrations (CI/production-style)                                                           |
 | `npm run db:push:sqlite -w @trackr/prisma` | SQLite `db push` for local desktop iteration (uses `file:./.local/trackr.sqlite` under `packages/prisma`) |
+| `npm run seed -w @trackr/prisma` | Seed dev tenant, org, project, board columns, and users (`admin@example.com`, `dev@example.com`) — requires Postgres reachable via `DATABASE_URL` and migrations applied |
 
 Full workflow notes: [`docs/phases/phase-0-foundations.md`](docs/phases/phase-0-foundations.md) (database section and stack decision links).
+
+**Phase 1 server + web:** the API persists to **PostgreSQL** via Prisma 7’s **driver adapter** (`@prisma/adapter-pg` + `pg` in `apps/server`). Set `DATABASE_URL` if your Postgres is not the default in `prisma.config.ts`. After migrations, run **`npm run seed -w @trackr/prisma`** once. Start the API on port **3000**, then the web app (Vite dev server proxies **`/api`** to the API so session cookies stay same-site):
+
+```bash
+npm run build -w @trackr/server && npm run dev -w @trackr/server
+# other terminal:
+npm run dev -w @trackr/web
+```
+
+Open **`http://localhost:5173/login`** and sign in with **`admin@example.com`** (dev login is allowed when `NODE_ENV` is not `production` or `ALLOW_DEV_AUTH=true`). Integration tests against a real DB: `RUN_INTEGRATION=true npm run test -w @trackr/server`.
 
 ### Web app (`apps/web`) and desktop (`apps/desktop`)
 
@@ -119,7 +130,7 @@ npm run dev -w @trackr/web
 npm run build -w @trackr/web
 ```
 
-The shared layout uses route-derived **title** and **tabs** (see `apps/web/src/lib/shell.ts` and `+layout.svelte`).
+The shared layout uses route-derived **title** and **tabs** (see `apps/web/src/lib/shell.ts` and `+layout.svelte`). Authenticated routes redirect to `/login` when there is no session.
 
 **Desktop:** Phase 0 may still use placeholder scripts for Tauri; follow `apps/desktop` when desktop packaging is enabled.
 
@@ -153,7 +164,18 @@ npm run format        # write fixes
 npm run check-format  # check only (also used by the pre-commit hook)
 ```
 
+### GitHub Actions CI
+
+CI uses an ephemeral Postgres container. Add a **repository secret** so credentials are not stored in the workflow file:
+
+1. In the GitHub repo: **Settings → Secrets and variables → Actions → New repository secret**.
+2. Name: **`CI_POSTGRES_PASSWORD`**
+3. Value: any strong random string used **only for CI** (the workflow builds  
+   `DATABASE_URL=postgresql://postgres:<secret>@localhost:5432/trackr_test` and sets the same value on the Postgres service).
+
+Use a password that does **not** contain URL-reserved characters (`@`, `:`, `/`, `#`, `?`) unless you adjust the workflow to percent-encode them. Pull requests from **forks** do not receive these secrets by default; CI from forks may fail until you use another workflow strategy or run checks only on same-repo branches.
+
 ### Notes
 
-- **PostgreSQL / Prisma**: the HTTP server runs without a database for basic `/health` and stub APIs; for DB-backed work, set `DATABASE_URL` and run `npm run build -w @trackr/prisma` plus migrations as in the Prisma table above.
+- **PostgreSQL / Prisma**: Phase 1 APIs require Postgres; run **`npm run migrate:deploy -w @trackr/prisma`** (or `migrate:dev` in development) and **`npm run seed -w @trackr/prisma`** before exercising auth and projects/tickets. Generate clients with `npm run build -w @trackr/prisma`.
 - **pnpm**: documentation elsewhere may mention `pnpm`; this repo is currently set up with **npm workspaces**. If you switch to pnpm, add `pnpm-workspace.yaml` and align tooling accordingly.

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.19.11",
+    "@prisma/adapter-pg": "^7.5.0",
     "@trackr/prisma": "0.0.0",
     "@trackr/types": "0.0.0",
     "hono": "^4.12.9",

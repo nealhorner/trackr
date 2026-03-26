@@ -9,9 +9,36 @@ on:
 jobs:
   test-build:
     runs-on: ubuntu-latest
+    # Password from repo secret only (Settings → Secrets and variables → Actions → CI_POSTGRES_PASSWORD).
+    # Must match the Postgres service below. Avoid @ : / # ? in the password unless you URL-encode.
+    env:
+      DATABASE_URL: postgresql://postgres:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/trackr_test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: trackr_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Require CI Postgres secret
+        run: |
+          if [ -z "$PGPW" ]; then
+            echo "::error::Add repository secret CI_POSTGRES_PASSWORD (see README — GitHub Actions CI)."
+            exit 1
+          fi
+        env:
+          PGPW: ${{ secrets.CI_POSTGRES_PASSWORD }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -25,10 +52,18 @@ jobs:
       - name: Prisma generate (Postgres + SQLite clients)
         run: npm run build -w @trackr/prisma
 
+      - name: Migrate and seed Postgres
+        working-directory: packages/prisma
+        run: |
+          npx prisma migrate deploy --config prisma.config.ts
+          npm run seed
+
       - name: Lint
         run: npm run lint
 
       - name: Test
+        env:
+          RUN_INTEGRATION: "true"
         run: npm run test
 
       - name: Build

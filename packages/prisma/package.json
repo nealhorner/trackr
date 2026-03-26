@@ -9,6 +9,7 @@
     "./sqlite": "./generated/client-sqlite/index.js"
   },
   "scripts": {
+    "seed": "tsx seed.ts",
     "build": "npm run generate:all",
     "generate:postgres": "prisma generate --schema prisma/postgres/schema.prisma",
     "generate:sqlite": "cross-env DATABASE_URL=file:./.local/trackr.sqlite prisma generate --schema prisma/sqlite/schema.prisma",
@@ -18,8 +19,13 @@
     "db:push:sqlite": "cross-env DATABASE_URL=file:./.local/trackr.sqlite prisma db push --schema prisma/sqlite/schema.prisma"
   },
   "devDependencies": {
+    "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "cross-env": "^7.0.3",
-    "prisma": "^7.5.0"
+    "prisma": "^7.5.0",
+    "tsx": "^4.19.0"
+  },
+  "prisma": {
+    "seed": "tsx seed.ts"
   }
 }
