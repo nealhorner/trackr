@@ -1,0 +1,22 @@
+
+> @trackr/server@0.0.0 test
+> vitest run --coverage
+
+
+ RUN  v4.1.2 /Users/nealhorner/Documents/projects/trackr/apps/server
+      Coverage enabled with v8
+
+ ✓ src/__tests__/health.test.ts (2 tests) 6ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  15:00:41
+   Duration  186ms (transform 20ms, setup 0ms, import 48ms, tests 6ms, environment 0ms)
+
+ % Coverage report from v8
+----------|---------|----------|---------|---------|-------------------
+File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------|---------|----------|---------|---------|-------------------
+All files |   61.53 |       25 |      50 |   58.33 |                   
+ index.ts |   61.53 |       25 |      50 |   58.33 | 45,55-59          
+----------|---------|----------|---------|---------|-------------------

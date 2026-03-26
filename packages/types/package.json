@@ -1,0 +1,17 @@
+{
+  "name": "@trackr/types",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "echo \"(scaffold) no dev server\"",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "echo \"(scaffold) lint not configured yet\"",
+    "e2e": "echo \"(scaffold) no e2e in types\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

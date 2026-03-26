@@ -1,0 +1,47 @@
+{
+  "name": "trackr",
+  "version": "1.0.0",
+  "description": "Trackr is an open source, self-hosted alternative to Jira for ticket and project management.",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "npm@11.5.1",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "e2e": "turbo e2e",
+    "check-format": "prettier --check .",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nealhorner/trackr.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nealhorner/trackr/issues"
+  },
+  "homepage": "https://github.com/nealhorner/trackr#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0",
+    "@vitest/coverage-v8": "^4.1.2",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.1",
+    "turbo": "^2.8.20",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

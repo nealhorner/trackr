@@ -28,6 +28,7 @@ users can authenticate, create projects, create tickets, comment, view a Kanban 
 - Sessions/tokens issuance and refresh handling.
 
 Acceptance criteria:
+
 - A user can sign in (web/desktop connected mode).
 - Invalid/unverified identities are rejected.
 - Linked identities resolve to a single canonical internal user per tenant.
@@ -44,6 +45,7 @@ Implement CRUD and relationships:
 - `TicketComment`
 
 Acceptance criteria:
+
 - Creating a project creates its board record.
 - Tickets always reference a project.
 - Ticket moves update `project_id` and record an audit event.
@@ -62,6 +64,7 @@ Implement additive-only authorization evaluation and hierarchical visibility def
   - admins receive context-aware options (ticket-level and/or project-level access) or can deny
 
 Acceptance criteria:
+
 - All ticket/project read endpoints return permission-appropriate DTOs.
 - Unauthorized “full content” data is never returned by the API.
 - Access requests and admin decisions are auditable.
@@ -90,6 +93,7 @@ Implement core routes (exact naming can follow your API conventions):
   - board column transitions that enforce column/workflow responsibilities (as defined in Phase 0/column policy rules)
 
 Acceptance criteria:
+
 - REST endpoints exist for all Phase 1 UI flows.
 - Pagination works for list endpoints.
 - Error responses follow the standardized shape from Phase 0.
@@ -100,6 +104,7 @@ Acceptance criteria:
 - Ensure tests can run deterministically.
 
 Acceptance criteria:
+
 - CI test runs produce consistent results without requiring manual setup.
 
 ## 2) Frontend (Web) Work
@@ -110,6 +115,7 @@ Acceptance criteria:
 - Token/session handling and redirect behavior.
 
 Acceptance criteria:
+
 - Users can sign in and reach Home/Your Work.
 
 ### 2.2 Projects UI
@@ -119,6 +125,7 @@ Acceptance criteria:
 - Project membership UI can be limited to MVP needs (if included, enforce admin permissions).
 
 Acceptance criteria:
+
 - Users can create projects they are authorized to manage.
 - Users can view project metadata when granted metadata visibility.
 
@@ -135,6 +142,7 @@ Acceptance criteria:
   - admins manage request approvals with ticket/project-level option set
 
 Acceptance criteria:
+
 - Users can create tickets even if they cannot read full project content.
 - Limited-view ticket pages never show restricted fields or discussion.
 
@@ -143,6 +151,7 @@ Acceptance criteria:
 - Ticket comments list and add-comment workflow (only when permitted).
 
 Acceptance criteria:
+
 - Unauthorized users cannot view or create comments.
 
 ### 2.5 Board UI (Kanban)
@@ -151,6 +160,7 @@ Acceptance criteria:
 - Allow ticket transitions according to permissions (global project + optional column rules as defined).
 
 Acceptance criteria:
+
 - Board interactions work for authorized users.
 - Drag/drop or transition actions are blocked/enforced for unauthorized users.
 
@@ -162,6 +172,7 @@ Acceptance criteria:
 - Ensure permission-based DTO changes are handled without stale data leaks.
 
 Acceptance criteria:
+
 - Switching permission tiers does not reveal stale restricted data in the UI.
 
 ## 4) Testing and Verification
@@ -182,6 +193,7 @@ Acceptance criteria:
   - view board
 
 Acceptance criteria:
+
 - E2E tests can run in CI with deterministic data.
 
 ## Phase 1 Exit Criteria (Definition of Done)
@@ -197,4 +209,3 @@ Acceptance criteria:
   - limited-view never leaks restricted content
   - access request UX behaves as specified
 - CI runs lint/tests/build and the Playwright smoke suite (or a minimal subset) successfully.
-

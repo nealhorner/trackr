@@ -8,6 +8,60 @@ This document lists the concrete decisions and scaffolding work required before 
 2. Establish the technical contracts (auth/access, API shape, identity model, navigation shell) so downstream code doesn’t churn.
 3. Ensure CI provides fast feedback (lint/test/build) per package/app.
 
+## Phase 0 Implementation To-Do (Track Progress)
+
+This checklist is for scaffolding-only Phase 0 work (i.e., get the repo/build/CI/app shells running) without implementing full product domain logic.
+
+### Monorepo Scaffolding
+
+- [x] Create monorepo workspace structure (`apps/server`, `apps/web`, `apps/desktop`, `packages/*`)
+- [~] Configure `pnpm` workspace + `Turborepo` pipeline (build/test/lint/dev task graph)
+- [x] Ensure each app has independent scripts (`dev`, `build`, `test`, `lint`) and can run without other apps
+- [x] Scaffold shared packages as minimal compile targets (at least `packages/types` and `packages/api-client`)
+
+### Quality Gates (CI)
+
+- [x] Add `pre-commit` hooks for fast local quality checks (format + lint + lightweight typecheck)
+- [x] Configure GitHub Actions workflows:
+  - [x] `pull_request` runs lint + format ("Lent")
+  - [x] `pull_request` runs tests/builds targeting `main`
+- [x] Set up Vitest unit tests with coverage reporting (and ensure coverage artifacts are produced/available in CI)
+- [x] Add Playwright E2E smoke test wiring so CI can run a minimal smoke suite for the UI shell
+
+### API Contract and Server Skeleton
+
+- [x] Scaffold `apps/server` using **Hono.js** with `/health`
+- [x] Create `/api/v1` routing structure and placeholder endpoints (consistent “not implemented” responses)
+- [ ] Add standardized error/response helpers used by all server routes
+
+### Database and Migrations Skeleton
+
+- [~] Add Prisma ORM + Prisma migrations setup with a shared Prisma schema targeting:
+  - [x] PostgreSQL (server mode)
+  - [ ] SQLite (desktop local mode)
+- [ ] Implement a migration runner workflow for local dev and CI (shared approach documented)
+- [ ] Ensure Prisma client generation works for both database targets
+
+### Auth and Access Control Foundations (Scaffolding Stubs)
+
+- [ ] Add provider-agnostic auth abstraction (`AuthProvider` adapter interface + core `AuthService` skeleton)
+- [ ] Implement verified-email enforcement logic path (gate unverified identities in server-connected mode)
+- [ ] Add authorization evaluation skeleton (additive-only) + canonical permission key list in application code
+- [ ] Add limited-view DTO shaping/endpoint stubs to ensure restricted data won’t leak in later implementation
+
+### UI Shell and Navigation Shell Spec
+
+- [x] Scaffold `apps/web` (SvelteKit) with the shared UI shell:
+  - [x] Top navbar (context title + tabs + upper-right global search placeholder)
+  - [x] Left collapsible global nav with tenant name and section order
+- [x] Add routes/pages for nav sections (Home, Your Work, Organizations, Projects, Analytics, Settings, Favorites) with placeholders
+- [ ] Add minimal router/context scaffolding so the UI header and tabs can update by active context later
+
+### Documentation and Contribution Basics
+
+- [ ] Ensure Phase 0 docs capture the exact developer commands (lint/test/build, Prisma migrate, e2e smoke)
+- [ ] Ensure docs link to all Phase 0 decisions (Hono, Vitest+coverage, Turborepo, Playwright, Prisma+Zod)
+
 ## 1) Monorepo Scaffolding
 
 ### 1.1 Workspace layout
@@ -22,6 +76,7 @@ This document lists the concrete decisions and scaffolding work required before 
   - `packages/config` (shared tooling config)
 
 Acceptance criteria:
+
 - Each app can be built and run independently from its own directory/package script.
 - Shared packages compile without importing app runtime modules.
 
@@ -35,6 +90,7 @@ Acceptance criteria:
   - test runner (recommended: `Vitest`) with coverage reporting
 
 Acceptance criteria:
+
 - `lint`, `test`, and `build` can run from the repo root and/or per app.
 
 ## 2) Quality Gates (CI)
@@ -48,6 +104,7 @@ Acceptance criteria:
   - build verification for each app
 
 Acceptance criteria:
+
 - CI can produce per-app logs (web vs server vs desktop) to keep debugging fast.
 
 ### 2.2 Pre-commit hooks
@@ -59,6 +116,7 @@ Acceptance criteria:
   - TypeScript/type-check or lightweight compilation (as appropriate for speed)
 
 Acceptance criteria:
+
 - A new developer can run hooks locally and get the same outcome as CI.
 
 ### 2.3 GitHub Actions: lint/format and PR-to-main testing
@@ -71,6 +129,7 @@ Acceptance criteria:
   - (optional) require “up to date” with the base branch
 
 Acceptance criteria:
+
 - Every PR into `main` is tested by CI, and no merge can bypass required checks.
 
 ### 2.4 Playwright for end-to-end testing
@@ -82,6 +141,7 @@ Acceptance criteria:
   - CI wiring so E2E smoke tests can run on PRs targeting `main`
 
 Acceptance criteria:
+
 - A developer can run the Playwright smoke suite locally against a started web/server instance.
 
 ## 3) API Contract and Server Skeleton
@@ -99,6 +159,7 @@ Define API conventions in a doc and then scaffold the server routing structure:
 - Pagination conventions on list endpoints
 
 Acceptance criteria:
+
 - API versioning is established in code and reflected in docs.
 
 ### 3.2 Typed contracts
@@ -108,6 +169,7 @@ Acceptance criteria:
   - ensure `packages/api-client` uses those types
 
 Acceptance criteria:
+
 - web and desktop compile against the same request/response types as the server.
 
 ## 4) Database and Migrations Skeleton
@@ -118,12 +180,14 @@ Acceptance criteria:
 - Local-only desktop storage: SQLite
 
 Decision in Phase 0:
+
 - Use Prisma ORM + Prisma migrations for schema evolution in both:
   - PostgreSQL (server mode)
   - SQLite (desktop local mode)
 - Configure a shared Prisma schema that can run against both databases, and ensure the migration workflow is documented for local dev and CI.
 
 Acceptance criteria:
+
 - Prisma migrations work consistently for both database targets in local dev and CI.
 
 ### 4.2 Initial schema targets
@@ -136,6 +200,7 @@ The schema must represent the core entity hierarchy and permission model:
 - `team` and team grants/assignments
 
 Acceptance criteria:
+
 - Referential integrity constraints exist for:
   - project belongs to organization
   - board is 1:1 with project
@@ -171,6 +236,7 @@ Phase 0 must lock in the rules so Phase 1 features don’t require rewrites.
 - Account linking/merge must never occur across tenants.
 
 Acceptance criteria:
+
 - Auth service has a provider-agnostic abstraction (`AuthProvider` adapters + core `AuthService`).
 - Merge/link behavior is deterministic and auditable.
 
@@ -191,6 +257,7 @@ Acceptance criteria:
 - Treat unknown permission keys as “not granted” during permission evaluation.
 
 Acceptance criteria:
+
 - A single authorization evaluation path exists that enforces “limited view” consistently.
 
 ## 6) UI Shell and Navigation Shell Spec
@@ -216,6 +283,7 @@ Phase 0 includes establishing the “layout contract” for all pages so the app
   7. Favorites
 
 Acceptance criteria:
+
 - All app routes use a single shared layout/shell component.
 
 ## 7) Documentation and Contribution Basics
@@ -229,5 +297,5 @@ Phase 0 should leave you with enough docs that a new contributor can run the pro
   - UI shell/navigation spec (link to existing nav requirements)
 
 Acceptance criteria:
-- A “new dev onboarding” path exists in docs that works end-to-end.
 
+- A “new dev onboarding” path exists in docs that works end-to-end.

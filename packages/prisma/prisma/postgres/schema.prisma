@@ -1,0 +1,278 @@
+generator clientPostgres {
+  provider = "prisma-client-js"
+  output   = "../../../generated/client-postgres"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id        Int           @id @default(autoincrement())
+  createdAt DateTime      @default(now())
+  name      String
+
+  organizations Organization[]
+  users         User[]
+  teams         Team[]
+  auditEvents   AuditEvent[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  tenantId Int
+  email    String
+
+  emailVerifiedAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  ticketReports   Ticket[]        @relation("TicketReporter")
+  ticketAssignees Ticket[]       @relation("TicketAssignee")
+  attachments      Attachment[]
+  comments         TicketComment[]
+  auditEvents      AuditEvent[]
+
+  projectMembers  ProjectMember[]
+  teamMembers     TeamMember[]
+}
+
+model Organization {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  tenantId Int
+  name     String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  projects Project[]
+
+  organizationTeamPermissions OrganizationTeamPermission[]
+}
+
+model Project {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+
+  organizationId Int
+  name            String
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  board        Board?
+  tickets      Ticket[]
+
+  projectMembers         ProjectMember[]
+  projectTeamPermissions ProjectTeamPermission[]
+  ticketTeamPermissions  TicketTeamPermission[]
+}
+
+model Board {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  projectId Int      @unique
+
+  project Project @relation(fields: [projectId], references: [id])
+  columns BoardColumn[]
+}
+
+model BoardColumn {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  boardId Int
+  key     String
+  name    String
+  position Int
+
+  board Board @relation(fields: [boardId], references: [id])
+  columnTeamPermissions BoardColumnTeamPermission[]
+
+  ticketsInColumn Ticket[] @relation("TicketStatusColumn")
+}
+
+model ProjectMember {
+  projectId Int
+  userId    Int
+  role      String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@id([projectId, userId])
+}
+
+model Team {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  tenantId Int
+  name     String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  members TeamMember[]
+
+  organizationTeamPermissions OrganizationTeamPermission[]
+  projectTeamPermissions      ProjectTeamPermission[]
+  ticketTeamPermissions       TicketTeamPermission[]
+  columnTeamPermissions       BoardColumnTeamPermission[]
+}
+
+model TeamMember {
+  teamId   Int
+  userId   Int
+  role     String
+  createdAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([teamId, userId])
+}
+
+model OrganizationTeamPermission {
+  organizationId Int
+  teamId          Int
+  permissionKey   String
+  createdAt       DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  team          Team        @relation(fields: [teamId], references: [id])
+
+  @@id([organizationId, teamId, permissionKey])
+}
+
+model ProjectTeamPermission {
+  projectId      Int
+  teamId         Int
+  permissionKey  String
+  createdAt      DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  team    Team    @relation(fields: [teamId], references: [id])
+
+  @@id([projectId, teamId, permissionKey])
+}
+
+model TicketTeamPermission {
+  ticketId      Int
+  teamId        Int
+  permissionKey String
+  createdAt     DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  @@id([ticketId, teamId, permissionKey])
+}
+
+model BoardColumnTeamPermission {
+  boardColumnId Int
+  teamId         Int
+  permissionKey  String
+  createdAt      DateTime @default(now())
+
+  boardColumn BoardColumn @relation(fields: [boardColumnId], references: [id])
+  team         Team        @relation(fields: [teamId], references: [id])
+
+  @@id([boardColumnId, teamId, permissionKey])
+}
+
+model Ticket {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId Int
+  title     String
+  descriptionMarkdown String?
+
+  status     String
+  type       String?
+  priority   String?
+  dueDate    DateTime?
+
+  reporterId Int
+  assigneeId Int?
+
+  boardColumnId Int?
+  movedAt DateTime?
+
+  project Project @relation(fields: [projectId], references: [id])
+  reporter User    @relation("TicketReporter", fields: [reporterId], references: [id])
+  assignee User?  @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  comments         TicketComment[]
+  attachments      Attachment[]
+  linksFrom        TicketLink[] @relation("LinkFrom")
+  linksTo          TicketLink[] @relation("LinkTo")
+  teamPermissions  TicketTeamPermission[]
+
+  statusColumn BoardColumn? @relation("TicketStatusColumn", fields: [boardColumnId], references: [id])
+}
+
+model TicketComment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  ticketId Int
+  authorId Int
+  body     String
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  author User   @relation(fields: [authorId], references: [id])
+}
+
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  ticketId   Int
+  uploadedBy Int
+  filename   String
+  mimeType   String?
+  sizeBytes  Int?
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  uploader User @relation(fields: [uploadedBy], references: [id])
+}
+
+model SavedFilter {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId Int
+  name   String
+  query  Json
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model TicketLink {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  fromTicketId Int
+  toTicketId   Int
+  linkType      String
+
+  fromTicket Ticket @relation("LinkFrom", fields: [fromTicketId], references: [id])
+  toTicket   Ticket @relation("LinkTo", fields: [toTicketId], references: [id])
+}
+
+model AuditEvent {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  tenantId Int
+  actorId  Int?
+  eventType String
+  metadata Json?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  actor  User?  @relation(fields: [actorId], references: [id])
+}
+

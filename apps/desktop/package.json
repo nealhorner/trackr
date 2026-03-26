@@ -1,0 +1,15 @@
+{
+  "name": "@trackr/desktop",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"(scaffold) desktop dev not configured yet\"",
+    "build": "echo \"(scaffold) desktop build not configured yet\"",
+    "test": "vitest run --passWithNoTests",
+    "lint": "echo \"(scaffold) desktop lint not configured yet\"",
+    "e2e": "echo \"(scaffold) no desktop e2e in Phase 0\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
