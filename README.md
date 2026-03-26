@@ -29,6 +29,7 @@ This repository contains product and technical planning documents for a platform
 - [`docs/mvp-scope.md`](docs/mvp-scope.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
 - [`docs/non-goals.md`](docs/non-goals.md)
+- Phase 0 scaffolding checklist and stack links: [`docs/phases/phase-0-foundations.md`](docs/phases/phase-0-foundations.md)
 
 ## Core Deployment Modes
 
@@ -94,9 +95,33 @@ Useful URLs while it is running:
 | `npm run lint`  | `turbo lint` — lint tasks per package (some are still placeholders)  |
 | `npm run dev`   | `turbo dev` — runs each app’s `dev` script in parallel               |
 
+### Database and Prisma (`packages/prisma`)
+
+Prisma 7 uses separate schema files for **PostgreSQL** (server) and **SQLite** (desktop/local). Generated clients live under `packages/prisma/generated/` (gitignored; CI runs generate).
+
+From the repo root after `npm install`:
+
+| Command                                    | What it does                                                                                              |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `npm run build -w @trackr/prisma`          | `prisma generate` for **both** Postgres and SQLite clients                                                |
+| `npm run migrate:dev -w @trackr/prisma`    | Create/apply Postgres migrations in dev (`DATABASE_URL` must point at Postgres; uses `prisma.config.ts`)  |
+| `npm run migrate:deploy -w @trackr/prisma` | Apply Postgres migrations (CI/production-style)                                                           |
+| `npm run db:push:sqlite -w @trackr/prisma` | SQLite `db push` for local desktop iteration (uses `file:./.local/trackr.sqlite` under `packages/prisma`) |
+
+Full workflow notes: [`docs/phases/phase-0-foundations.md`](docs/phases/phase-0-foundations.md) (database section and stack decision links).
+
 ### Web app (`apps/web`) and desktop (`apps/desktop`)
 
-Phase 0 scaffolding: **`dev` and `build` are placeholders** (they print a message and exit). A full SvelteKit dev server and Tauri desktop build are planned in later phases. You can still open the repo’s Svelte route files under `apps/web/src/routes/` for layout structure.
+**Web:** SvelteKit is wired in `apps/web`. Dev and production build:
+
+```bash
+npm run dev -w @trackr/web
+npm run build -w @trackr/web
+```
+
+The shared layout uses route-derived **title** and **tabs** (see `apps/web/src/lib/shell.ts` and `+layout.svelte`).
+
+**Desktop:** Phase 0 may still use placeholder scripts for Tauri; follow `apps/desktop` when desktop packaging is enabled.
 
 ### End-to-end tests (Playwright)
 
@@ -130,5 +155,5 @@ npm run check-format  # check only (also used by the pre-commit hook)
 
 ### Notes
 
-- **PostgreSQL / Prisma**: database URL and migrations are not required for the current Phase 0 HTTP server; Prisma schema files live under `packages/prisma/`. Follow `docs/phases/phase-0-foundations.md` as the project wires up migrations and clients.
+- **PostgreSQL / Prisma**: the HTTP server runs without a database for basic `/health` and stub APIs; for DB-backed work, set `DATABASE_URL` and run `npm run build -w @trackr/prisma` plus migrations as in the Prisma table above.
 - **pnpm**: documentation elsewhere may mention `pnpm`; this repo is currently set up with **npm workspaces**. If you switch to pnpm, add `pnpm-workspace.yaml` and align tooling accordingly.

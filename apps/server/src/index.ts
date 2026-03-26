@@ -1,7 +1,15 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 
+import { toLimitedTicketView } from "./auth/limited-ticket-view";
+import { getRequestId, jsonError, jsonFromUnknown, jsonOk } from "./lib/api";
+
 const app = new Hono();
+
+app.onError((err, c) => {
+  const requestId = getRequestId(c);
+  return jsonFromUnknown(c, err, requestId);
+});
 
 // Health endpoint for liveness checks and smoke tests.
 app.get("/health", (c) => c.json({ status: "ok" }));
@@ -40,11 +48,39 @@ app.get("/", (c) => {
   return c.body(html, 200, { "Content-Type": "text/html" });
 });
 
+// Example: limited ticket DTO (Phase 0 stub — not persisted).
+app.get("/api/v1/tickets/:id", (c) => {
+  const raw = c.req.param("id");
+  const id = Number(raw);
+  if (!Number.isFinite(id)) {
+    return jsonError(
+      c,
+      "validation_error",
+      "Invalid ticket id",
+      400,
+      getRequestId(c),
+    );
+  }
+  const limited = toLimitedTicketView(
+    {
+      id,
+      title: "Example ticket (stub)",
+      descriptionMarkdown: null,
+      status: "open",
+    },
+    [],
+  );
+  return jsonOk(c, { ticket: limited });
+});
+
 // Placeholder API v1 routes (Phase 0 scaffolding only).
 app.get("/api/v1/:resource", (c) => {
-  return c.json(
-    { error: "not_implemented", message: "API endpoint not implemented yet" },
+  return jsonError(
+    c,
+    "not_implemented",
+    "API endpoint not implemented yet",
     501,
+    getRequestId(c),
   );
 });
 

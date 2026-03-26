@@ -1,6 +1,19 @@
 node_modules
+
+# Build and test artifacts (match turbo.json outputs: dist/**, coverage/**)
+dist/
+coverage/
+
 turbo-build.log
 turbo-test.log
 turbo-lint.log
 turbo-e2e.log
 .turbo/cache/
+
+# Prisma generated clients (run `npm run build -w @trackr/prisma`)
+packages/prisma/generated/
+
+# Local SQLite files used by Prisma CLI / desktop dev
+packages/prisma/.local/
+*.db
+*.db-journal

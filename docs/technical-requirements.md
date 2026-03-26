@@ -47,6 +47,17 @@ Monorepo requirements:
   - Local mode: SQLite
 - **ORM/Data Layer**: Prisma ORM + Prisma migrations supporting PostgreSQL(server mode) + SQLite(desktop local mode)
 
+### 2.1 Phase 0 technology references
+
+Concrete tooling choices for scaffolding are documented in [`docs/phases/phase-0-foundations.md`](phases/phase-0-foundations.md). Quick links:
+
+- [Hono](https://hono.dev/)
+- [Vitest](https://vitest.dev/) (coverage via `@vitest/coverage-v8`)
+- [Turborepo](https://turbo.build/repo/docs)
+- [Playwright](https://playwright.dev/)
+- [Prisma](https://www.prisma.io/docs)
+- [Zod](https://zod.dev/)
+
 ## 3. Core Components
 
 ### 3.1 Server API

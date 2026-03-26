@@ -3,20 +3,33 @@
 > vitest run --coverage
 
 
-[1m[46m RUN [49m[22m [36mv4.1.2 [39m[90m/Users/nealhorner/Documents/projects/trackr/apps/server[39m
-      [2mCoverage enabled with [22m[33mv8[39m
+ RUN  v4.1.2 /Users/nealhorner/Documents/projects/trackr/apps/server
+      Coverage enabled with v8
 
- [32m✓[39m src/__tests__/health.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ ✓ src/__tests__/auth.test.ts (4 tests) 3ms
+ ✓ src/__tests__/api-lib.test.ts (2 tests) 17ms
+ ✓ src/__tests__/health.test.ts (2 tests) 8ms
+ ✓ src/__tests__/api-errors.test.ts (2 tests) 7ms
 
-[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
-[2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
-[2m   Start at [22m 15:22:02
-[2m   Duration [22m 176ms[2m (transform 18ms, setup 0ms, import 46ms, tests 6ms, environment 0ms)[22m
+ Test Files  4 passed (4)
+      Tests  10 passed (10)
+   Start at  15:41:51
+   Duration  210ms (transform 120ms, setup 0ms, import 226ms, tests 35ms, environment 0ms)
 
-[34m % [39m[2mCoverage report from [22m[33mv8[39m
-----------|---------|----------|---------|---------|-------------------
-File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
-----------|---------|----------|---------|---------|-------------------
-All files |   66.66 |    16.66 |      50 |   63.63 |                   
- index.ts |   66.66 |    16.66 |      50 |   63.63 | 45,57-65          
-----------|---------|----------|---------|---------|-------------------
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   66.03 |       50 |   57.14 |   65.38 |                   
+ src               |      50 |     12.5 |      50 |   47.61 |                   
+  index.ts         |      50 |     12.5 |      50 |   47.61 | ...6,58-78,98-106 
+ src/auth          |   68.75 |    71.42 |   44.44 |   68.75 |                   
+  auth-service.ts  |       0 |      100 |       0 |       0 | 9-19              
+  index.ts         |       0 |        0 |       0 |       0 |                   
+  ...icket-view.ts |       0 |        0 |       0 |       0 | 11                
+  linking.ts       |   66.66 |       50 |      50 |   66.66 | 11                
+  permissions.ts   |     100 |      100 |     100 |     100 |                   
+  ...fied-email.ts |     100 |      100 |     100 |     100 |                   
+ src/lib           |   86.66 |    71.42 |   83.33 |   86.66 |                   
+  api.ts           |   86.66 |    71.42 |   83.33 |   86.66 | 45-46             
+-------------------|---------|----------|---------|---------|-------------------

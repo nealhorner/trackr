@@ -8,6 +8,17 @@ This document lists the concrete decisions and scaffolding work required before 
 2. Establish the technical contracts (auth/access, API shape, identity model, navigation shell) so downstream code doesn’t churn.
 3. Ensure CI provides fast feedback (lint/test/build) per package/app.
 
+## Phase 0 stack decisions (references)
+
+These are the baseline tools locked in for Phase 0 scaffolding (see also [`README.md`](../../README.md) Local development and [`docs/technical-requirements.md`](../technical-requirements.md)):
+
+- [Hono](https://hono.dev/) — HTTP API server
+- [Vitest](https://vitest.dev/) + coverage — unit tests
+- [Turborepo](https://turbo.build/repo/docs) — monorepo task graph
+- [Playwright](https://playwright.dev/) — E2E / smoke tests
+- [Prisma](https://www.prisma.io/docs) — ORM, migrations, dual Postgres + SQLite targets in `packages/prisma`
+- [Zod](https://zod.dev/) — input validation (used with API and shared types as features land)
+
 ## Phase 0 Implementation To-Do (Track Progress)
 
 This checklist is for scaffolding-only Phase 0 work (i.e., get the repo/build/CI/app shells running) without implementing full product domain logic.
@@ -15,7 +26,7 @@ This checklist is for scaffolding-only Phase 0 work (i.e., get the repo/build/CI
 ### Monorepo Scaffolding
 
 - [x] Create monorepo workspace structure (`apps/server`, `apps/web`, `apps/desktop`, `packages/*`)
-- [~] Configure `pnpm` workspace + `Turborepo` pipeline (build/test/lint/dev task graph)
+- [x] Configure **npm workspaces** + **Turborepo** pipeline (build/test/lint/dev task graph). (`pnpm` is not required; an alternative `pnpm-workspace.yaml` could be added later if desired.)
 - [x] Ensure each app has independent scripts (`dev`, `build`, `test`, `lint`) and can run without other apps
 - [x] Scaffold shared packages as minimal compile targets (at least `packages/types` and `packages/api-client`)
 
@@ -32,22 +43,22 @@ This checklist is for scaffolding-only Phase 0 work (i.e., get the repo/build/CI
 
 - [x] Scaffold `apps/server` using **Hono.js** with `/health`
 - [x] Create `/api/v1` routing structure and placeholder endpoints (consistent “not implemented” responses)
-- [ ] Add standardized error/response helpers used by all server routes
+- [x] Add standardized error/response helpers used by all server routes
 
 ### Database and Migrations Skeleton
 
-- [~] Add Prisma ORM + Prisma migrations setup with a shared Prisma schema targeting:
+- [x] Add Prisma ORM + Prisma migrations setup with a shared Prisma schema targeting:
   - [x] PostgreSQL (server mode)
-  - [ ] SQLite (desktop local mode)
-- [ ] Implement a migration runner workflow for local dev and CI (shared approach documented)
-- [ ] Ensure Prisma client generation works for both database targets
+  - [x] SQLite (desktop local mode)
+- [x] Implement a migration runner workflow for local dev and CI (shared approach documented)
+- [x] Ensure Prisma client generation works for both database targets
 
 ### Auth and Access Control Foundations (Scaffolding Stubs)
 
-- [ ] Add provider-agnostic auth abstraction (`AuthProvider` adapter interface + core `AuthService` skeleton)
-- [ ] Implement verified-email enforcement logic path (gate unverified identities in server-connected mode)
-- [ ] Add authorization evaluation skeleton (additive-only) + canonical permission key list in application code
-- [ ] Add limited-view DTO shaping/endpoint stubs to ensure restricted data won’t leak in later implementation
+- [x] Add provider-agnostic auth abstraction (`AuthProvider` adapter interface + core `AuthService` skeleton)
+- [x] Implement verified-email enforcement logic path (gate unverified identities in server-connected mode)
+- [x] Add authorization evaluation skeleton (additive-only) + canonical permission key list in application code
+- [x] Add limited-view DTO shaping/endpoint stubs to ensure restricted data won’t leak in later implementation
 
 ### UI Shell and Navigation Shell Spec
 
@@ -55,12 +66,12 @@ This checklist is for scaffolding-only Phase 0 work (i.e., get the repo/build/CI
   - [x] Top navbar (context title + tabs + upper-right global search placeholder)
   - [x] Left collapsible global nav with tenant name and section order
 - [x] Add routes/pages for nav sections (Home, Your Work, Organizations, Projects, Analytics, Settings, Favorites) with placeholders
-- [ ] Add minimal router/context scaffolding so the UI header and tabs can update by active context later
+- [x] Add minimal router/context scaffolding so the UI header and tabs can update by active context later
 
 ### Documentation and Contribution Basics
 
-- [ ] Ensure Phase 0 docs capture the exact developer commands (lint/test/build, Prisma migrate, e2e smoke)
-- [ ] Ensure docs link to all Phase 0 decisions (Hono, Vitest+coverage, Turborepo, Playwright, Prisma+Zod)
+- [x] Ensure Phase 0 docs capture the exact developer commands (lint/test/build, Prisma migrate, e2e smoke)
+- [x] Ensure docs link to all Phase 0 decisions (Hono, Vitest+coverage, Turborepo, Playwright, Prisma+Zod)
 
 ## 1) Monorepo Scaffolding
 
@@ -83,8 +94,8 @@ Acceptance criteria:
 ### 1.2 Tooling baseline
 
 - Decide and document:
-  - package manager (recommended: `pnpm`)
-  - workspace runner (recommended: `Turborepo`)
+  - package manager: **npm workspaces** (root `package.json` `workspaces`; `packageManager` pinned in root `package.json`)
+  - workspace runner: **Turborepo**
   - lint/format setup (`eslint`, `prettier`)
   - TypeScript base configuration and path conventions
   - test runner (recommended: `Vitest`) with coverage reporting

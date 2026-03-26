@@ -6,7 +6,13 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**", ".svelte-kit/**", "coverage/**"]
+      "outputs": [
+        "dist/**",
+        "build/**",
+        ".svelte-kit/**",
+        "coverage/**",
+        "generated/**"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]

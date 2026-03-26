@@ -5,3 +5,5 @@ export type ApiError = {
   code: string;
   message: string;
 };
+
+export type { TicketFull, TicketLimited, TicketView } from "./ticket-dto";
