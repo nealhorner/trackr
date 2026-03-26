@@ -1,3 +1,6 @@
 node_modules
 turbo-build.log
 turbo-test.log
+turbo-lint.log
+turbo-e2e.log
+.turbo/cache/
