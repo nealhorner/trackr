@@ -29,9 +29,10 @@ Acceptance criteria:
 
 - Decide and document:
   - package manager (recommended: `pnpm`)
-  - workspace runner (recommended: `turbo` or equivalent)
+  - workspace runner (recommended: `Turborepo`)
   - lint/format setup (`eslint`, `prettier`)
   - TypeScript base configuration and path conventions
+  - test runner (recommended: `Vitest`) with coverage reporting
 
 Acceptance criteria:
 - `lint`, `test`, and `build` can run from the repo root and/or per app.
@@ -42,7 +43,8 @@ Acceptance criteria:
 
 - CI should run:
   - lint for changed packages/apps
-  - unit tests
+  - unit tests (using Vitest)
+  - code coverage reporting from Vitest (for example, upload HTML or publish coverage artifacts)
   - build verification for each app
 
 Acceptance criteria:
@@ -115,11 +117,14 @@ Acceptance criteria:
 - Server mode storage: PostgreSQL
 - Local-only desktop storage: SQLite
 
-Decision needed in Phase 0:
-- choose the migration approach/tooling that works for both DBs (or clearly separate them).
+Decision in Phase 0:
+- Use Prisma ORM + Prisma migrations for schema evolution in both:
+  - PostgreSQL (server mode)
+  - SQLite (desktop local mode)
+- Configure a shared Prisma schema that can run against both databases, and ensure the migration workflow is documented for local dev and CI.
 
 Acceptance criteria:
-- A single “migration runner” concept exists for local dev and CI.
+- Prisma migrations work consistently for both database targets in local dev and CI.
 
 ### 4.2 Initial schema targets
 

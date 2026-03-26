@@ -38,14 +38,14 @@ Monorepo requirements:
 
 ## 2. Recommended High-Level Stack (Decision)
 
-- **Backend**: TypeScript (Node.js) with a modular web framework
+- **Backend**: TypeScript (Node.js) with **Hono.js**
 - **Web UI**: SvelteKit + TypeScript
 - **Frontend Data Fetching/Caching**: TanStack Query for Svelte
 - **Desktop**: Tauri + shared Svelte UI package
 - **Databases**:
   - Server mode: PostgreSQL
   - Local mode: SQLite
-- **ORM/Data Layer**: single abstraction supporting PostgreSQL + SQLite where practical
+- **ORM/Data Layer**: Prisma ORM + Prisma migrations supporting PostgreSQL(server mode) + SQLite(desktop local mode)
 
 ## 3. Core Components
 
@@ -168,7 +168,7 @@ Ticket move behavior:
 - Password hashing with modern algorithm (Argon2 or bcrypt with strong params).
 - Session/token expiration and refresh handling.
 - Project-level access control enforced server-side.
-- Input validation and output sanitization.
+- Input validation with Zod and output sanitization.
 - Audit trail for critical actions (status changes, permission changes).
 
 ## 6.0 Authentication and Account Linking
