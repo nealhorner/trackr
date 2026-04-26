@@ -35,3 +35,5 @@ packages/prisma/.local/
 
 # Tauri
 apps/desktop/src-tauri/gen/schemas/
+
+!.env.schema
