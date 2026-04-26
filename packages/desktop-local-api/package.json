@@ -1,0 +1,26 @@
+{
+  "name": "@trackr/desktop-local-api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run src",
+    "lint": "echo \"(scaffold) lint not configured yet\"",
+    "e2e": "echo \"(scaffold) no e2e for local api\""
+  },
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.5.0",
+    "@trackr/prisma": "0.0.0",
+    "better-sqlite3": "^11.10.0",
+    "hono": "^4.12.9",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.2"
+  }
+}

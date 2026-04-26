@@ -10,12 +10,14 @@
   },
   "scripts": {
     "seed": "tsx seed.ts",
+    "seed:sqlite": "tsx seed-sqlite.ts",
     "build": "npm run generate:all",
     "generate:postgres": "prisma generate --schema prisma/postgres/schema.prisma",
     "generate:sqlite": "cross-env DATABASE_URL=file:./.local/trackr.sqlite prisma generate --schema prisma/sqlite/schema.prisma",
     "generate:all": "npm run generate:postgres && npm run generate:sqlite",
     "migrate:dev": "prisma migrate dev --config prisma.config.ts",
     "migrate:deploy": "prisma migrate deploy --config prisma.config.ts",
+    "migrate:deploy:sqlite": "cross-env DATABASE_URL=file:./.local/trackr.sqlite prisma migrate deploy --schema prisma/sqlite/schema.prisma",
     "db:push:sqlite": "cross-env DATABASE_URL=file:./.local/trackr.sqlite prisma db push --schema prisma/sqlite/schema.prisma"
   },
   "devDependencies": {
