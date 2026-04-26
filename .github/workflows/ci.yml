@@ -59,8 +59,8 @@ jobs:
           RUN_INTEGRATION: "true"
         run: npm run test
 
-      - name: Build
-        run: npm run build
+      - name: Build (exclude desktop app on generic Linux job)
+        run: npx turbo build --filter=!@trackr/desktop
 
       - name: Install Playwright browsers
         run: npx playwright install chromium
