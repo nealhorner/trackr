@@ -173,7 +173,7 @@ CI uses an ephemeral Postgres container. Add a **repository secret** so credenti
 3. Value: any strong random string used **only for CI** (the workflow builds  
    `DATABASE_URL=postgresql://postgres:<secret>@localhost:5432/trackr_test` and sets the same value on the Postgres service).
 
-Use a password that does **not** contain URL-reserved characters (`@`, `:`, `/`, `#`, `?`) unless you adjust the workflow to percent-encode them. Pull requests from **forks** do not receive these secrets by default; CI from forks may fail until you use another workflow strategy or run checks only on same-repo branches.
+Use a password that does **not** contain URL-reserved characters (`@`, `:`, `/`, `#`, `?`) unless you adjust the workflow to percent-encode them. Pull requests from **forks** do not receive repo secrets by default; this workflow falls back to a local CI-only password so the Postgres service still starts on fork PR runs.
 
 ### Notes
 

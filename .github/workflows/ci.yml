@@ -9,9 +9,10 @@ on:
 jobs:
   test-build:
     runs-on: ubuntu-latest
-    # Password from repo secret only (Settings → Secrets and variables → Actions → CI_POSTGRES_PASSWORD).
-    # Must match the Postgres service below. Avoid @ : / # ? in the password unless you URL-encode.
+    # Service containers start before steps, so provide a fallback password when secrets are unavailable
+    # (e.g. PRs from forks). Must match Postgres service env below.
     env:
+      CI_PG_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
       DATABASE_URL: postgresql://postgres:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/trackr_test
     services:
       postgres:
@@ -30,15 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Require CI Postgres secret
-        run: |
-          if [ -z "$PGPW" ]; then
-            echo "::error::Add repository secret CI_POSTGRES_PASSWORD (see README — GitHub Actions CI)."
-            exit 1
-          fi
-        env:
-          PGPW: ${{ secrets.CI_POSTGRES_PASSWORD }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -74,3 +66,40 @@ jobs:
 
       - name: E2E
         run: npm run e2e
+
+  desktop-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate (Postgres + SQLite clients)
+        run: npm run build -w @trackr/prisma
+
+      - name: Build desktop local API
+        run: npm run build -w @trackr/desktop-local-api
+
+      - name: Build desktop app
+        run: npm run build -w @trackr/desktop
