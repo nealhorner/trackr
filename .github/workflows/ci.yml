@@ -9,7 +9,7 @@ on:
 jobs:
   test-build:
     runs-on: ubuntu-latest
-    # Service containers start before steps, so provide a fallback password when secrets are unavailable
+    # Service containers start before steps
     # (e.g. PRs from forks). Must match Postgres service env below.
     env:
       CI_PG_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
