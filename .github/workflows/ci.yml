@@ -65,8 +65,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium
 
-      - name: E2E
-        run: npm run e2e
+      - name: E2E (exclude desktop app on generic Linux job)
+        run: npx turbo e2e --filter=!@trackr/desktop
 
   desktop-build:
     runs-on: ubuntu-latest

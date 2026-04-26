@@ -32,3 +32,6 @@ packages/prisma/.local/
 
 # Rust
 .cargo-local/
+
+# Tauri
+apps/desktop/src-tauri/gen/schemas/
