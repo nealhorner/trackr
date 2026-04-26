@@ -85,7 +85,7 @@ describe("auth routes: dev-login", () => {
       email: "admin@example.com",
       tenantId: 7,
     });
-    
+
     expect(findFirstUser).toHaveBeenCalledWith({
       where: {
         email: "admin@example.com",

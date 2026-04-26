@@ -208,7 +208,10 @@ v1.get("/projects/:id/tickets", requireAuth, async (c) => {
     );
   }
   await getProjectForUser(u.id, u.tenantId, projectId);
-  const { limit, page, skip } = pagination(c.req.query("limit"), c.req.query("page"));
+  const { limit, page, skip } = pagination(
+    c.req.query("limit"),
+    c.req.query("page"),
+  );
 
   const [items, total] = await Promise.all([
     prisma.ticket.findMany({
