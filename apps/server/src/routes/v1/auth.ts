@@ -15,9 +15,13 @@ const devLoginSchema = z
   .object({
     email: z.string().email().optional(),
     userId: z.number().int().positive().optional(),
+    tenantId: z.number().int().positive().optional(),
   })
   .refine((d) => d.email != null || d.userId != null, {
     message: "Provide email or userId",
+  })
+  .refine((d) => d.email == null || d.tenantId != null, {
+    message: "Provide tenantId when using email",
   });
 
 const SESSION_MAX_SEC = 30 * 24 * 60 * 60;
@@ -69,7 +73,10 @@ authRoutes.post("/dev-login", async (c) => {
 
   const user = parsed.data.email
     ? await prisma.user.findFirst({
-        where: { email: parsed.data.email },
+        where: {
+          email: parsed.data.email,
+          tenantId: parsed.data.tenantId!,
+        },
       })
     : await prisma.user.findUnique({
         where: { id: parsed.data.userId! },
