@@ -42,7 +42,8 @@ jobs:
         run: npm ci
 
       - name: Prisma generate (Postgres + SQLite clients)
-        run: npm run build -w @trackr/prisma
+        working-directory: packages/prisma
+        run: npm run build
 
       - name: Migrate and seed Postgres
         working-directory: packages/prisma
@@ -96,10 +97,13 @@ jobs:
         run: npm ci
 
       - name: Prisma generate (Postgres + SQLite clients)
-        run: npm run build -w @trackr/prisma
+        working-directory: packages/prisma
+        run: npm run build
 
       - name: Build desktop local API
-        run: npm run build -w @trackr/desktop-local-api
+        working-directory: packages/desktop-local-api
+        run: npm run build
 
       - name: Build desktop app
-        run: npm run build -w @trackr/desktop
+        working-directory: apps/desktop
+        run: npm run build
