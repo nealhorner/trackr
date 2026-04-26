@@ -14,6 +14,12 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       reportsDirectory: "./coverage",
+      thresholds: {
+        lines: 26,
+        functions: 27,
+        branches: 13,
+        statements: 25,
+      },
     },
   },
 });
