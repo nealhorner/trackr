@@ -2,6 +2,6 @@
 export function isDevAuthAllowed(): boolean {
   return (
     process.env.ALLOW_DEV_AUTH === "true" ||
-    process.env.NODE_ENV !== "production"
+    process.env.NODE_ENV === "development"
   );
 }
