@@ -3,7 +3,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 
 use tauri::{AppHandle, Manager, State};
-use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_dialog::{DialogExt, FilePath};
 
 struct SidecarState {
     child: Mutex<Option<Child>>,
@@ -40,6 +40,15 @@ fn sidecar_entry_path(app: &AppHandle) -> Result<PathBuf, String> {
     app.path()
         .resolve("sidecar/index.js", tauri::path::BaseDirectory::Resource)
         .map_err(|e| format!("Failed to resolve sidecar entry in bundle: {e}"))
+}
+
+fn file_path_to_path_buf(path: FilePath) -> Result<PathBuf, String> {
+    match path {
+        FilePath::Path(p) => Ok(p),
+        FilePath::Url(u) => Err(format!(
+            "Unsupported file URL from picker; expected local file path: {u}"
+        )),
+    }
 }
 
 #[tauri::command]
@@ -92,6 +101,7 @@ async fn export_local_data(app: AppHandle, state: State<'_, SidecarState>) -> Re
     let Some(path) = rx.recv().map_err(|e| e.to_string())? else {
         return Err(String::from("Export cancelled"));
     };
+    let path = file_path_to_path_buf(path)?;
 
     std::fs::write(&path, json).map_err(|e| format!("Failed writing export file: {e}"))?;
     Ok(path.display().to_string())
@@ -108,6 +118,7 @@ async fn import_local_data(app: AppHandle, state: State<'_, SidecarState>) -> Re
     let Some(path) = rx.recv().map_err(|e| e.to_string())? else {
         return Err(String::from("Import cancelled"));
     };
+    let path = file_path_to_path_buf(path)?;
 
     let payload =
         std::fs::read_to_string(&path).map_err(|e| format!("Failed reading import file: {e}"))?;
