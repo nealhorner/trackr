@@ -1,8 +1,8 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 
-import { toLimitedTicketView } from "./auth/limited-ticket-view";
-import { getRequestId, jsonError, jsonFromUnknown, jsonOk } from "./lib/api";
+import { getRequestId, jsonFromUnknown } from "./lib/api";
+import { v1 } from "./routes/v1/index";
 
 const app = new Hono();
 
@@ -14,9 +14,7 @@ app.onError((err, c) => {
 // Health endpoint for liveness checks and smoke tests.
 app.get("/health", (c) => c.json({ status: "ok" }));
 
-// UI-shell smoke endpoint (Phase 0).
-// This is a temporary scaffolding route so Playwright can validate the UI shell early,
-// before the full SvelteKit UI is wired in Phase 1.
+// UI-shell smoke endpoint (Phase 0). Phase 1 web uses SvelteKit; keep for legacy E2E if needed.
 app.get("/", (c) => {
   const html = `
   <!doctype html>
@@ -48,41 +46,7 @@ app.get("/", (c) => {
   return c.body(html, 200, { "Content-Type": "text/html" });
 });
 
-// Example: limited ticket DTO (Phase 0 stub — not persisted).
-app.get("/api/v1/tickets/:id", (c) => {
-  const raw = c.req.param("id");
-  const id = Number(raw);
-  if (!Number.isFinite(id)) {
-    return jsonError(
-      c,
-      "validation_error",
-      "Invalid ticket id",
-      400,
-      getRequestId(c),
-    );
-  }
-  const limited = toLimitedTicketView(
-    {
-      id,
-      title: "Example ticket (stub)",
-      descriptionMarkdown: null,
-      status: "open",
-    },
-    [],
-  );
-  return jsonOk(c, { ticket: limited });
-});
-
-// Placeholder API v1 routes (Phase 0 scaffolding only).
-app.get("/api/v1/:resource", (c) => {
-  return jsonError(
-    c,
-    "not_implemented",
-    "API endpoint not implemented yet",
-    501,
-    getRequestId(c),
-  );
-});
+app.route("/api/v1", v1);
 
 export default app;
 

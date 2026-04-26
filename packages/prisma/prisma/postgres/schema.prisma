@@ -38,6 +38,21 @@ model User {
   projectMembers  ProjectMember[]
   teamMembers     TeamMember[]
   savedFilters    SavedFilter[]
+  sessions        Session[]
+}
+
+/// Server-side sessions (opaque token stored as SHA-256 hash).
+model Session {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Organization {

@@ -9,6 +9,25 @@ on:
 jobs:
   test-build:
     runs-on: ubuntu-latest
+    # Service containers start before steps
+    # (e.g. PRs from forks). Must match Postgres service env below.
+    env:
+      CI_PG_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+      DATABASE_URL: postgresql://postgres:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/trackr_test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: trackr_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,19 +42,68 @@ jobs:
         run: npm ci
 
       - name: Prisma generate (Postgres + SQLite clients)
-        run: npm run build -w @trackr/prisma
+        working-directory: packages/prisma
+        run: npm run build
+
+      - name: Migrate and seed Postgres
+        working-directory: packages/prisma
+        run: |
+          npx prisma migrate deploy --config prisma.config.ts
+          npm run seed
 
       - name: Lint
         run: npm run lint
 
       - name: Test
+        env:
+          RUN_INTEGRATION: "true"
         run: npm run test
 
-      - name: Build
-        run: npm run build
+      - name: Build (exclude desktop app on generic Linux job)
+        run: npx turbo build --filter=!@trackr/desktop
 
       - name: Install Playwright browsers
         run: npx playwright install chromium
 
-      - name: E2E
-        run: npm run e2e
+      - name: E2E (exclude desktop app on generic Linux job)
+        run: npx turbo e2e --filter=!@trackr/desktop
+
+  desktop-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate (Postgres + SQLite clients)
+        working-directory: packages/prisma
+        run: npm run build
+
+      - name: Build desktop local API
+        working-directory: packages/desktop-local-api
+        run: npm run build
+
+      - name: Build desktop app
+        working-directory: apps/desktop
+        run: npm run build

@@ -29,3 +29,9 @@ packages/prisma/generated/
 packages/prisma/.local/
 *.db
 *.db-journal
+
+# Rust
+.cargo-local/
+
+# Tauri
+apps/desktop/src-tauri/gen/schemas/

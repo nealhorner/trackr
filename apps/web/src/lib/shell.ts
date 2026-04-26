@@ -40,12 +40,38 @@ export function createShellState(): Readable<ShellState> {
       };
     }
     if (path.startsWith("/projects")) {
+      const m = path.match(/^\/projects\/(\d+)/);
+      const id = m?.[1];
+      if (id && path.includes("/tickets/")) {
+        return {
+          contextTitle: "Ticket",
+          tabs: [
+            { label: "Details", href: path },
+            { label: "Board", href: `/projects/${id}/board` },
+          ],
+        };
+      }
+      if (id && path.includes("/board")) {
+        return {
+          contextTitle: "Board",
+          tabs: [
+            { label: "Board", href: `/projects/${id}/board` },
+            { label: "Project", href: `/projects/${id}` },
+          ],
+        };
+      }
+      if (id) {
+        return {
+          contextTitle: "Project",
+          tabs: [
+            { label: "Overview", href: `/projects/${id}` },
+            { label: "Board", href: `/projects/${id}/board` },
+          ],
+        };
+      }
       return {
         contextTitle: "Projects",
-        tabs: [
-          { label: "Board", href: "/projects" },
-          { label: "Backlog", href: "/projects" },
-        ],
+        tabs: [{ label: "All", href: "/projects" }],
       };
     }
     if (path.startsWith("/analytics")) {
