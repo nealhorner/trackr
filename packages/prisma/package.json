@@ -31,6 +31,6 @@
     "seed": "cd ../.. && npm run seed -w @trackr/server"
   },
   "dependencies": {
-    "varlock": "^0.9.1"
+    "varlock": "^1.1.0"
   }
 }

@@ -4,6 +4,7 @@
   import { goto } from "$app/navigation";
 
   import { authClient } from "$lib/auth-client";
+  import { ENV } from "varlock/env";
 
   type AuthFlags = {
     password: boolean;
@@ -13,8 +14,12 @@
     okta: boolean;
   };
 
-  let email = "admin@example.com";
-  let password = "TrackrDev!local1";
+  let email = "";
+  let password = "";
+  if (ENV.APP_ENV === "development") {
+    email = "admin@example.com";
+    password = "TrackrDev!local1";
+  }
   let err = "";
   let busy = false;
   let setupComplete = true;
