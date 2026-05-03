@@ -7,18 +7,92 @@ datasource db {
   provider = "postgresql"
 }
 
+// --- Better Auth (table names via @@map) ---
+
+model User {
+  id            String   @id
+  name          String
+  email         String
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  appUser AppUser?
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// --- Trackr application (integer user keys) ---
+
 model Tenant {
-  id        Int           @id @default(autoincrement())
-  createdAt DateTime      @default(now())
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
   name      String
+  /// When null, the self-hosted instance has not completed first-time setup.
+  setupCompleteAt DateTime?
+  /// Feature flags for which auth entry points to show, e.g. { "password": true, "google": false }.
+  authSettings      Json?
 
   organizations Organization[]
-  users         User[]
+  users         AppUser[]
   teams         Team[]
   auditEvents   AuditEvent[]
 }
 
-model User {
+/// Product user (FK targets use Int). Linked 1:1 to Better Auth `User` when using server auth.
+model AppUser {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
@@ -26,33 +100,22 @@ model User {
   email    String
 
   emailVerifiedAt DateTime?
+  isTenantAdmin   Boolean  @default(false)
+  /// Better Auth user id (string) when the account has completed password/OAuth sign-up.
+  authUserId String? @unique
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  authUser User?  @relation(fields: [authUserId], references: [id], onDelete: SetNull)
 
   ticketReports   Ticket[]        @relation("TicketReporter")
-  ticketAssignees Ticket[]       @relation("TicketAssignee")
-  attachments      Attachment[]
-  comments         TicketComment[]
-  auditEvents      AuditEvent[]
+  ticketAssignees   Ticket[]        @relation("TicketAssignee")
+  attachments       Attachment[]
+  comments          TicketComment[]
+  auditEvents       AuditEvent[]
 
-  projectMembers  ProjectMember[]
+  projectMembers ProjectMember[]
   teamMembers     TeamMember[]
   savedFilters    SavedFilter[]
-  sessions        Session[]
-}
-
-/// Server-side sessions (opaque token stored as SHA-256 hash).
-model Session {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  userId    Int
-  tokenHash String   @unique
-  expiresAt DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
 }
 
 model Organization {
@@ -69,8 +132,8 @@ model Organization {
 }
 
 model Project {
-  id              Int      @id @default(autoincrement())
-  createdAt       DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
 
   organizationId Int
   name            String
@@ -97,12 +160,12 @@ model BoardColumn {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  boardId Int
-  key     String
-  name    String
+  boardId  Int
+  key      String
+  name     String
   position Int
 
-  board Board @relation(fields: [boardId], references: [id])
+  board                 Board      @relation(fields: [boardId], references: [id])
   columnTeamPermissions BoardColumnTeamPermission[]
 
   ticketsInColumn Ticket[] @relation("TicketStatusColumn")
@@ -115,7 +178,7 @@ model ProjectMember {
   createdAt DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+  user    AppUser @relation(fields: [userId], references: [id])
 
   @@id([projectId, userId])
 }
@@ -142,29 +205,29 @@ model TeamMember {
   role     String
   createdAt DateTime @default(now())
 
-  team Team @relation(fields: [teamId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  team Team    @relation(fields: [teamId], references: [id])
+  user AppUser @relation(fields: [userId], references: [id])
 
   @@id([teamId, userId])
 }
 
 model OrganizationTeamPermission {
   organizationId Int
-  teamId          Int
-  permissionKey   String
-  createdAt       DateTime @default(now())
+  teamId         Int
+  permissionKey  String
+  createdAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id])
-  team          Team        @relation(fields: [teamId], references: [id])
+  team         Team         @relation(fields: [teamId], references: [id])
 
   @@id([organizationId, teamId, permissionKey])
 }
 
 model ProjectTeamPermission {
-  projectId      Int
-  teamId         Int
-  permissionKey  String
-  createdAt      DateTime @default(now())
+  projectId     Int
+  teamId        Int
+  permissionKey String
+  createdAt     DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id])
   team    Team    @relation(fields: [teamId], references: [id])
@@ -201,30 +264,30 @@ model Ticket {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  projectId Int
-  title     String
+  projectId           Int
+  title               String
   descriptionMarkdown String?
 
-  status     String
-  type       String?
-  priority   String?
-  dueDate    DateTime?
+  status   String
+  type     String?
+  priority String?
+  dueDate  DateTime?
 
   reporterId Int
   assigneeId Int?
 
   boardColumnId Int?
-  movedAt DateTime?
+  movedAt       DateTime?
 
-  project Project @relation(fields: [projectId], references: [id])
-  reporter User    @relation("TicketReporter", fields: [reporterId], references: [id])
-  assignee User?  @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  project Project  @relation(fields: [projectId], references: [id])
+  reporter AppUser @relation("TicketReporter", fields: [reporterId], references: [id])
+  assignee AppUser? @relation("TicketAssignee", fields: [assigneeId], references: [id])
 
-  comments         TicketComment[]
-  attachments      Attachment[]
-  linksFrom        TicketLink[] @relation("LinkFrom")
-  linksTo          TicketLink[] @relation("LinkTo")
-  teamPermissions  TicketTeamPermission[]
+  comments        TicketComment[]
+  attachments     Attachment[]
+  linksFrom       TicketLink[] @relation("LinkFrom")
+  linksTo         TicketLink[] @relation("LinkTo")
+  teamPermissions TicketTeamPermission[]
 
   statusColumn BoardColumn? @relation("TicketStatusColumn", fields: [boardColumnId], references: [id])
 }
@@ -237,8 +300,8 @@ model TicketComment {
   authorId Int
   body     String
 
-  ticket Ticket @relation(fields: [ticketId], references: [id])
-  author User   @relation(fields: [authorId], references: [id])
+  ticket Ticket  @relation(fields: [ticketId], references: [id])
+  author AppUser @relation(fields: [authorId], references: [id])
 }
 
 model Attachment {
@@ -251,8 +314,8 @@ model Attachment {
   mimeType   String?
   sizeBytes  Int?
 
-  ticket Ticket @relation(fields: [ticketId], references: [id])
-  uploader User @relation(fields: [uploadedBy], references: [id])
+  ticket   Ticket  @relation(fields: [ticketId], references: [id])
+  uploader AppUser @relation(fields: [uploadedBy], references: [id])
 }
 
 model SavedFilter {
@@ -263,7 +326,7 @@ model SavedFilter {
   name   String
   query  Json
 
-  user User @relation(fields: [userId], references: [id])
+  user AppUser @relation(fields: [userId], references: [id])
 }
 
 model TicketLink {
@@ -272,7 +335,7 @@ model TicketLink {
 
   fromTicketId Int
   toTicketId   Int
-  linkType      String
+  linkType     String
 
   fromTicket Ticket @relation("LinkFrom", fields: [fromTicketId], references: [id])
   toTicket   Ticket @relation("LinkTo", fields: [toTicketId], references: [id])
@@ -282,12 +345,11 @@ model AuditEvent {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  tenantId Int
-  actorId  Int?
+  tenantId  Int
+  actorId   Int?
   eventType String
-  metadata Json?
+  metadata  Json?
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  actor  User?  @relation(fields: [actorId], references: [id])
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  actor  AppUser? @relation(fields: [actorId], references: [id])
 }
-
