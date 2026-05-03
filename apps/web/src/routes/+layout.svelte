@@ -59,17 +59,20 @@
 
   async function guard(pathname: string) {
     if (typeof window === "undefined") return;
-    if (pathname === "/login" || pathname === "/setup") return;
+    if (pathname === "/login") return;
+
+    if (pathname === "/setup") {
+      const d = (await fetchPublicConfig()).data;
+      if (d.setupComplete) await goto("/");
+      return;
+    }
+
     const d = (await fetchPublicConfig()).data;
     if (!d.setupComplete) {
-      if (pathname !== "/setup") await goto("/setup");
+      await goto("/setup");
       return;
     }
-    if (pathname === "/setup" && d.setupComplete) {
-      await goto("/");
-      return;
-    }
-    if (pathname === "/login" || pathname === "/setup") return;
+
     const me = await fetch("/api/v1/me", { credentials: "include" });
     if (me.status === 401) {
       await goto("/login");
