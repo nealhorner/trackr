@@ -87,26 +87,70 @@ fn write_config_file(app: &AppHandle, c: &DesktopConfig) -> Result<(), String> {
     fs::rename(&tmp, &p).map_err(|e| format!("Failed to save config: {e}"))
 }
 
-const ADJ: [&str; 20] = [
+const ADJ: [&str; 170] = [
     "brisk", "quiet", "swift", "gentle", "bold", "calm", "bright", "dappled", "eager", "frosted",
     "golden", "hollow", "jade", "kind", "lunar", "mellow", "nimble", "olive", "proud", "rapid",
+    "sparkling", "tranquil", "vibrant", "whimsical", "zenith", "zephyr", "aether", "blossom", "cascade", "dusk",
+    "echo", "fable", "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic", "nebulous",
+    "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper", "xanadu",
+    "yonder", "zenith", "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable", "glisten",
+    "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl", "quasar",
+    "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith", "zephyr",
+    "aether", "blossom", "cascade", "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade",
+    "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil",
+    "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade",
+    "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic",
+    "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper",
+    "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable",
+    "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl",
+    "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith",
+    "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable", "glisten", "horizon", "iris",
 ];
-const NOUN: [&str; 20] = [
+const NOUN: [&str; 354] = [
     "mesa", "river", "canyon", "pines", "harbor", "maple", "coral", "dune", "falcon", "grove",
     "heath", "isle", "jetty", "kite", "lattice", "meadow", "oak", "prairie", "raven", "summit",
+    "valley", "wave", "whale", "xylophone", "yacht", "zebra", "zephyr", "aether", "blossom", "cascade",
+    "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic",
+    "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper",
+    "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable",
+    "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl",
+    "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith",
+    "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade",
+    "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil",
+    "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade",
+    "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic",
+    "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper",
+    "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable",
+    "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl",
+    "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith",
+    "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade",
+    "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil",
+    "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade",
+    "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic",
+    "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper",
+    "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable",
+    "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl",
+    "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith",
+    "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade",
+    "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil",
+    "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade",
+    "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic",
+    "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper",
+    "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable",
+    "glisten", "horizon", "iris", "jade", "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl",
+    "quasar", "radiant", "sylph", "tranquil", "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith",
+    "zephyr", "aether", "blossom", "cascade", "dusk", "echo", "fable", "glisten", "horizon", "iris", "jade",
+    "kaleidoscope", "luster", "mystic", "nebulous", "oasis", "pearl", "quasar", "radiant", "sylph", "tranquil",
+    "ultraviolet", "valkyrie", "whisper", "xanadu", "yonder", "zenith", "zephyr", "aether", "blossom", "cascade",
 ];
 
 #[tauri::command]
 fn generate_local_display_name() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let t = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64)
-        .unwrap_or(0);
-    let i = (t as usize) % (ADJ.len() * NOUN.len());
-    let a = i / NOUN.len();
-    let n = i % NOUN.len();
-    format!("local-{}-{}", ADJ[a % ADJ.len()], NOUN[n % NOUN.len()])
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let a = rng.gen_range(0..ADJ.len());
+    let n = rng.gen_range(0..NOUN.len());
+    format!("local-{}-{}", ADJ[a], NOUN[n])
 }
 
 /// Normalize server URL: trim, strip trailing `/`, require http(s) when present.
