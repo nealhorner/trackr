@@ -74,7 +74,9 @@ test.describe("desktop onboarding (remote)", () => {
     await page.getByRole("button", { name: /^Sign in$/i }).click();
 
     await expect(page).toHaveURL(/127\.0\.0\.1:1420\/?$/, { timeout: 30_000 });
-    await expect(page.getByRole("heading", { name: /^Desktop$/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /^Desktop$/i }),
+    ).toBeVisible();
     await expect(page.getByText(/127\.0\.0\.1:3000/)).toBeVisible();
   });
 });
@@ -93,10 +95,12 @@ test.describe("desktop onboarding (local)", () => {
 
     await page.getByRole("button", { name: /Continue locally/i }).click();
 
-    await expect(
-      page.getByText(/workspace label is/i),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/workspace label is/i)).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByText(/e2e-local-workspace/i)).toBeVisible();
-    await expect(page.getByRole("heading", { name: /^Desktop$/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /^Desktop$/i }),
+    ).toBeVisible();
   });
 });

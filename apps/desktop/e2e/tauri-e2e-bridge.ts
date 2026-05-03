@@ -16,8 +16,7 @@ export async function installTauriE2EBridge(
   page: Page,
   options: TauriE2EBridgeOptions = {},
 ): Promise<void> {
-  const localApiUrl =
-    options.mockLocalApiBaseUrl ?? "http://127.0.0.1:3000";
+  const localApiUrl = options.mockLocalApiBaseUrl ?? "http://127.0.0.1:3000";
 
   await page.addInitScript(
     ({ localApiUrl: base }: { localApiUrl: string }) => {
@@ -57,9 +56,7 @@ export async function installTauriE2EBridge(
               version: typeof next.version === "number" ? next.version : 1,
               mode: next.mode ?? "unset",
               remoteBaseUrl:
-                next.remoteBaseUrl !== undefined
-                  ? next.remoteBaseUrl
-                  : null,
+                next.remoteBaseUrl !== undefined ? next.remoteBaseUrl : null,
               localDisplayName:
                 next.localDisplayName !== undefined
                   ? next.localDisplayName

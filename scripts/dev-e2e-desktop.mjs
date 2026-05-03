@@ -34,14 +34,10 @@ function checkHealth() {
 /** True if something is already serving the desktop dev URL (avoids EADDRINUSE on 1420). */
 function desktopDevResponding() {
   return new Promise((resolve) => {
-    const req = http.get(
-      "http://127.0.0.1:1420/",
-      { timeout: 2000 },
-      (res) => {
-        res.resume();
-        resolve(true);
-      },
-    );
+    const req = http.get("http://127.0.0.1:1420/", { timeout: 2000 }, (res) => {
+      res.resume();
+      resolve(true);
+    });
     req.on("error", () => resolve(false));
     req.on("timeout", () => {
       req.destroy();
