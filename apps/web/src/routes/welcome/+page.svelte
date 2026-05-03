@@ -6,15 +6,20 @@
   let isAdmin = false;
 
   onMount(async () => {
-    const r = await fetch("/api/v1/me", { credentials: "include" });
-    if (!r.ok) {
+    try {
+      const r = await fetch("/api/v1/me", { credentials: "include" });
+      if (!r.ok) {
+        await goto("/login");
+        return;
+      }
+      const j = (await r.json()) as {
+        data: { user: { isTenantAdmin: boolean } };
+      };
+      isAdmin = j.data.user.isTenantAdmin;
+    } catch {
       await goto("/login");
       return;
     }
-    const j = (await r.json()) as {
-      data: { user: { isTenantAdmin: boolean } };
-    };
-    isAdmin = j.data.user.isTenantAdmin;
   });
 </script>
 
