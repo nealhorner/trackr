@@ -17,29 +17,50 @@
 
   let tenantLabel = "Trackr";
 
-  async function loadTenantName() {
+  type PublicConfigPayload = {
+    data: { tenantName?: string | null; setupComplete: boolean };
+  };
+
+  const defaultPublicConfig: PublicConfigPayload = {
+    data: { setupComplete: false },
+  };
+
+  async function fetchPublicConfig(): Promise<PublicConfigPayload> {
     try {
       const r = await fetch("/api/v1/public-config", {
         credentials: "include",
       });
-      const j = (await r.json()) as {
-        data: { tenantName?: string | null; setupComplete: boolean };
-      };
-      if (j.data.setupComplete && j.data.tenantName) {
-        tenantLabel = j.data.tenantName;
+      if (!r.ok) {
+        console.error(
+          "[layout] public-config request failed",
+          r.status,
+          r.statusText,
+        );
+        return defaultPublicConfig;
       }
-    } catch {
-      /* ignore */
+      const j = (await r.json()) as PublicConfigPayload;
+      if (!j?.data || typeof j.data.setupComplete !== "boolean") {
+        console.error("[layout] public-config invalid shape", j);
+        return defaultPublicConfig;
+      }
+      return j;
+    } catch (e) {
+      console.error("[layout] public-config fetch error", e);
+      return defaultPublicConfig;
+    }
+  }
+
+  async function loadTenantName() {
+    const j = await fetchPublicConfig();
+    if (j.data.setupComplete && j.data.tenantName) {
+      tenantLabel = j.data.tenantName;
     }
   }
 
   async function guard(pathname: string) {
     if (typeof window === "undefined") return;
     if (pathname === "/login" || pathname === "/setup") return;
-    const pc = await (
-      await fetch("/api/v1/public-config", { credentials: "include" })
-    ).json();
-    const d = (pc as { data: { setupComplete: boolean } }).data;
+    const d = (await fetchPublicConfig()).data;
     if (!d.setupComplete) {
       if (pathname !== "/setup") await goto("/setup");
       return;
