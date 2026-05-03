@@ -18,6 +18,7 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "e2e": "turbo e2e",
+    "dev:e2e": "concurrently -k -n api,web \"npm run dev -w @trackr/server\" \"npx wait-on -t 120000 http://127.0.0.1:3000/health && npm run dev -w @trackr/web\"",
     "check-format": "prettier --check .",
     "format": "prettier --write .",
     "prepare": "husky"
@@ -38,9 +39,11 @@
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.5.0",
     "@vitest/coverage-v8": "^4.1.2",
+    "concurrently": "^9.2.0",
     "husky": "^9.1.7",
     "prettier": "^3.8.1",
     "turbo": "^2.8.20",
+    "wait-on": "^8.0.1",
     "typescript": "^6.0.2",
     "varlock": "^0.9.1",
     "vitest": "^4.1.2"

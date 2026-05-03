@@ -60,6 +60,16 @@ From the repo root:
 npm install
 ```
 
+### Server env quick reference (self-hosted)
+
+- **`POSTGRES_DATABASE_URL`** — Postgres connection string for `apps/server` and Prisma Postgres migrations (see [Database and Prisma](#database-and-prisma-packagesprisma) below).
+- **`BETTER_AUTH_SECRET`** — at least 32 characters in production; used by Better Auth for session signing.
+- **`BETTER_AUTH_URL`** — public base URL of the API (e.g. `https://trackr.example.com`) so auth cookies and OAuth redirects match your deployment.
+- **`BETTER_AUTH_TRUSTED_ORIGINS`** — comma-separated web origins allowed to use cookies (e.g. your Svelte dev server and Tauri: `http://localhost:5173,https://tauri.localhost`).
+- **`TRACKR_CONFIG_PATH`** — optional path to a JSON file that pre-fills first-time setup (tenant name, auth toggles). Does not replace secrets in production.
+- **`TRACKR_SETUP_SECRET`** — if set, `POST /api/v1/setup/complete` requires header `X-Trackr-Setup-Token` with the same value.
+- **OAuth (optional):** `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`, `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET`, `OKTA_CLIENT_ID` / `OKTA_CLIENT_SECRET` / `OKTA_ISSUER`.
+
 To match CI exactly after cloning (requires a lockfile):
 
 ```bash
@@ -101,17 +111,17 @@ Prisma 7 uses separate schema files for **PostgreSQL** (server) and **SQLite** (
 
 From the repo root after `npm install`:
 
-| Command                                    | What it does                                                                                                                                                             |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run build -w @trackr/prisma`          | `prisma generate` for **both** Postgres and SQLite clients                                                                                                               |
-| `npm run migrate:dev -w @trackr/prisma`    | Create/apply Postgres migrations in dev (`DATABASE_URL` must point at Postgres; uses `prisma.config.ts`)                                                                 |
-| `npm run migrate:deploy -w @trackr/prisma` | Apply Postgres migrations (CI/production-style)                                                                                                                          |
-| `npm run db:push:sqlite -w @trackr/prisma` | SQLite `db push` for local desktop iteration (uses `file:./.local/trackr.sqlite` under `packages/prisma`)                                                                |
-| `npm run seed -w @trackr/prisma`           | Seed dev tenant, org, project, board columns, and users (`admin@example.com`, `dev@example.com`) — requires Postgres reachable via `DATABASE_URL` and migrations applied |
+| Command                                    | What it does                                                                                                                                                                      |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build -w @trackr/prisma`          | `prisma generate` for **both** Postgres and SQLite clients                                                                                                                        |
+| `npm run migrate:dev -w @trackr/prisma`    | Create/apply Postgres migrations in dev (`POSTGRES_DATABASE_URL` must point at Postgres; uses `prisma.config.ts`)                                                                 |
+| `npm run migrate:deploy -w @trackr/prisma` | Apply Postgres migrations (CI/production-style)                                                                                                                                   |
+| `npm run db:push:sqlite -w @trackr/prisma` | SQLite `db push` for local desktop iteration (uses `file:./.local/trackr.sqlite` under `packages/prisma`)                                                                         |
+| `npm run seed -w @trackr/prisma`           | Seed dev tenant, org, project, board columns, and users (`admin@example.com`, `dev@example.com`) — requires Postgres reachable via `POSTGRES_DATABASE_URL` and migrations applied |
 
 Full workflow notes: [`docs/phases/phase-0-foundations.md`](docs/phases/phase-0-foundations.md) (database section and stack decision links).
 
-**Phase 1 server + web:** the API persists to **PostgreSQL** via Prisma 7’s **driver adapter** (`@prisma/adapter-pg` + `pg` in `apps/server`). Set `DATABASE_URL` if your Postgres is not the default in `prisma.config.ts`. After migrations, run **`npm run seed -w @trackr/prisma`** once. Start the API on port **3000**, then the web app (Vite dev server proxies **`/api`** to the API so session cookies stay same-site):
+**Phase 1 server + web:** the API persists to **PostgreSQL** via Prisma 7’s **driver adapter** (`@prisma/adapter-pg` + `pg` in `apps/server`). Set `POSTGRES_DATABASE_URL` if your Postgres is not the default in `prisma.config.ts`. After migrations, run **`npm run seed -w @trackr/prisma`** once. Start the API on port **3000**, then the web app (Vite dev server proxies **`/api`** to the API so session cookies stay same-site):
 
 ```bash
 npm run build -w @trackr/server && npm run dev -w @trackr/server
@@ -171,7 +181,7 @@ CI uses an ephemeral Postgres container. Add a **repository secret** so credenti
 1. In the GitHub repo: **Settings → Secrets and variables → Actions → New repository secret**.
 2. Name: **`CI_POSTGRES_PASSWORD`**
 3. Value: any strong random string used **only for CI** (the workflow builds  
-   `DATABASE_URL=postgresql://postgres:<secret>@localhost:5432/trackr_test` and sets the same value on the Postgres service).
+   `POSTGRES_DATABASE_URL=postgresql://postgres:<secret>@localhost:5432/trackr_test` and sets the same value on the Postgres service).
 
 Use a password that does **not** contain URL-reserved characters (`@`, `:`, `/`, `#`, `?`) unless you adjust the workflow to percent-encode them. Pull requests from **forks** do not receive repo secrets by default; this workflow falls back to a local CI-only password so the Postgres service still starts on fork PR runs.
 
