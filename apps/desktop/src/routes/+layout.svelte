@@ -28,10 +28,18 @@
 
   async function guardRemoteSession() {
     if (!browser || !cfg || cfg.mode !== "remote") return;
-    if ($page.url.pathname === "/connect") return;
+    const pathname = $page.url.pathname;
+    if (pathname === "/connect") return;
     const base = cfg.remoteBaseUrl?.replace(/\/$/, "");
     if (!base) return;
-    const me = await fetch(`${base}/api/v1/me`, { credentials: "include" });
+    let me: Response;
+    try {
+      me = await fetch(`${base}/api/v1/me`, { credentials: "include" });
+    } catch (err) {
+      console.warn("[guardRemoteSession] /me request failed", err);
+      await goto("/connect");
+      return;
+    }
     if (me.status === 401) {
       await goto("/connect");
     }
