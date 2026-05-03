@@ -1,7 +1,7 @@
 {
   "name": "trackr",
   "version": "1.0.0",
-  "description": "Trackr is an open source, self-hosted alternative to Jira for ticket and project management.",
+  "description": "Trackr is an open source, self-hosted alternative ticket and project management tool.",
   "main": "index.js",
   "private": true,
   "workspaces": [
