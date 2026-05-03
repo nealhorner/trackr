@@ -44,6 +44,12 @@
         return;
       }
       await goto("/");
+    } catch (e) {
+      err =
+        e instanceof Error && e.message.trim()
+          ? e.message
+          : "Network error during sign in";
+      return;
     } finally {
       busy = false;
     }
