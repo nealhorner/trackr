@@ -41,13 +41,13 @@ export function isLocalOnlyMode(): boolean {
   if (process.env.NODE_ENV === "production") {
     return false;
   }
+  const fromTrusted = process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",") ?? [];
   const configuredOrigins = [
     toOrigin(process.env.BETTER_AUTH_URL),
-    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
-      .map((origin) => toOrigin(origin.trim()))
-      .filter((origin): origin is string => Boolean(origin)) ?? []),
-  ];
-  return configuredOrigins.every(
-    (origin): origin is string => origin !== null && isLocalOrigin(origin),
+    ...fromTrusted.map((origin) => toOrigin(origin.trim())),
+  ].filter((o): o is string => Boolean(o));
+  return (
+    configuredOrigins.length > 0 &&
+    configuredOrigins.every((origin) => isLocalOrigin(origin))
   );
 }
