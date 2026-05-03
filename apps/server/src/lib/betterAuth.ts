@@ -17,10 +17,18 @@ const { google, github, apple } = nodeRequire(
 const { genericOAuth, okta } = nodeRequire("better-auth/plugins") as any;
 
 const secret = process.env.BETTER_AUTH_SECRET;
-if (!secret || secret.length < 32) {
-  // set BETTER_AUTH_SECRET in production
-}
 const localOnlyMode = isLocalOnlyMode();
+
+if (!secret || secret.length < 32) {
+  if (!localOnlyMode) {
+    throw new Error(
+      "BETTER_AUTH_SECRET must be set to a string at least 32 characters long when not in local-only mode (missing, empty, or too short).",
+    );
+  }
+  console.warn(
+    "[better-auth] BETTER_AUTH_SECRET is missing or shorter than 32 characters; using the dev placeholder because local-only mode is enabled.",
+  );
+}
 
 const defaultOrigins = [
   "http://127.0.0.1:3000",
