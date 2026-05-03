@@ -6,6 +6,7 @@ declare module "hono" {
       id: number;
       tenantId: number;
       email: string;
+      isTenantAdmin: boolean;
     } | null;
   }
 }

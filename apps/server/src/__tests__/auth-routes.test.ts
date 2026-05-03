@@ -1,28 +1,27 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { findFirstUser, createSession } = vi.hoisted(() => ({
-  findFirstUser: vi.fn(),
-  createSession: vi.fn(),
+const { findFirstAppUser, signInEmail } = vi.hoisted(() => ({
+  findFirstAppUser: vi.fn(),
+  signInEmail: vi.fn(),
 }));
 
 vi.mock("../env", () => ({
   isDevAuthAllowed: () => true,
 }));
 
-vi.mock("../lib/session-crypto", () => ({
-  generateSessionToken: () => "raw-session-token",
-  hashSessionToken: () => "hashed-session-token",
+vi.mock("../lib/betterAuth", () => ({
+  auth: {
+    api: {
+      signInEmail: signInEmail,
+    },
+  },
 }));
 
 vi.mock("../lib/db", () => ({
   prisma: {
-    user: {
-      findFirst: findFirstUser,
-    },
-    session: {
-      create: createSession,
-      deleteMany: vi.fn(),
+    appUser: {
+      findFirst: findFirstAppUser,
     },
   },
 }));
@@ -38,8 +37,10 @@ function makeApp() {
 describe("auth routes: dev-login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    findFirstUser.mockResolvedValue(null);
-    createSession.mockResolvedValue({ id: 1 });
+    findFirstAppUser.mockResolvedValue(null);
+    signInEmail.mockResolvedValue(
+      new Response(null, { status: 200, headers: { "set-cookie": "test=1" } }),
+    );
   });
 
   it("rejects login when tenantId is missing", async () => {
@@ -52,82 +53,36 @@ describe("auth routes: dev-login", () => {
     });
 
     expect(res.status).toBe(400);
-    expect(findFirstUser).not.toHaveBeenCalled();
-    const body = (await res.json()) as { message: string };
-    expect(body.message).toContain("tenantId");
+    expect(findFirstAppUser).not.toHaveBeenCalled();
   });
 
-  it("looks up email by tenant and creates a session", async () => {
+  it("calls Better Auth sign-in for app user with auth link", async () => {
     const app = makeApp();
-    findFirstUser.mockResolvedValue({
+    findFirstAppUser.mockResolvedValue({
       id: 42,
       email: "admin@example.com",
       tenantId: 7,
+      authUserId: "auth-1",
     });
 
     const res = await app.request("/api/v1/auth/dev-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "admin@example.com", tenantId: 7 }),
-    });
-
-    expect(res.status).toBe(200);
-
-    const body = (await res.json()) as {
-      data: {
-        token: string;
-        user: { id: number; email: string; tenantId: number };
-      };
-    };
-    expect(body.data.token).toBe("raw-session-token");
-    expect(body.data.user).toEqual({
-      id: 42,
-      email: "admin@example.com",
-      tenantId: 7,
-    });
-
-    expect(findFirstUser).toHaveBeenCalledWith({
-      where: {
+      body: JSON.stringify({
         email: "admin@example.com",
         tenantId: 7,
-      },
-    });
-    expect(createSession).toHaveBeenCalledWith({
-      data: {
-        userId: 42,
-        tokenHash: "hashed-session-token",
-        expiresAt: expect.any(Date),
-      },
-    });
-  });
-
-  it("looks up userId by tenant and creates a session", async () => {
-    const app = makeApp();
-    findFirstUser.mockResolvedValue({
-      id: 42,
-      email: "admin@example.com",
-      tenantId: 7,
-    });
-
-    const res = await app.request("/api/v1/auth/dev-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: 42, tenantId: 7 }),
+        password: "devpass123",
+      }),
     });
 
     expect(res.status).toBe(200);
-    expect(findFirstUser).toHaveBeenCalledWith({
-      where: {
-        id: 42,
-        tenantId: 7,
-      },
-    });
-    expect(createSession).toHaveBeenCalledWith({
-      data: {
-        userId: 42,
-        tokenHash: "hashed-session-token",
-        expiresAt: expect.any(Date),
-      },
-    });
+    expect(signInEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          email: "admin@example.com",
+        }),
+        asResponse: true,
+      }),
+    );
   });
 });

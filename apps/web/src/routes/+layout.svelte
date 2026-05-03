@@ -1,8 +1,10 @@
 <script lang="ts">
   import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
+  import { onMount } from "svelte";
+  import { get } from "svelte/store";
   import { setContext } from "svelte";
 
-  import { goto } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
 
   import { createShellState } from "$lib/shell";
@@ -11,8 +13,60 @@
   const shell = createShellState();
   setContext("shell", shell);
 
+  const bare = ["/login", "/setup"];
+  $: isBare = bare.includes(get(page).url.pathname);
+
+  let tenantLabel = "Trackr";
+
+  async function loadTenantName() {
+    try {
+      const r = await fetch("/api/v1/public-config", { credentials: "include" });
+      const j = (await r.json()) as {
+        data: { tenantName?: string | null; setupComplete: boolean };
+      };
+      if (j.data.setupComplete && j.data.tenantName) {
+        tenantLabel = j.data.tenantName;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function guard() {
+    if (typeof window === "undefined") return;
+    const path = get(page).url.pathname as string;
+    if (path === "/login" || path === "/setup") return;
+    const pc = await (
+      await fetch("/api/v1/public-config", { credentials: "include" })
+    ).json();
+    const d = (pc as { data: { setupComplete: boolean } }).data;
+    if (!d.setupComplete) {
+      if (path !== "/setup") await goto("/setup");
+      return;
+    }
+    if (path === "/setup" && d.setupComplete) {
+      await goto("/");
+      return;
+    }
+    if (path === "/login" || path === "/setup") return;
+    const me = await fetch("/api/v1/me", { credentials: "include" });
+    if (me.status === 401) {
+      await goto("/login");
+    }
+  }
+
+  onMount(() => {
+    void loadTenantName();
+    void guard();
+  });
+
+  afterNavigate(() => {
+    void loadTenantName();
+    void guard();
+  });
+
   async function signOut() {
-    await fetch("/api/v1/auth/logout", {
+    await fetch("/api/auth/sign-out", {
       method: "POST",
       credentials: "include",
     });
@@ -21,7 +75,7 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
-  {#if $page.url.pathname === "/login"}
+  {#if isBare}
     <slot />
   {:else}
     <div class="app-shell">
@@ -49,7 +103,7 @@
 
       <div class="body">
         <aside class="left-nav">
-          <div class="tenant-name">Trackr</div>
+          <div class="tenant-name">{tenantLabel}</div>
           <nav class="nav-sections">
             <a href="/">Home</a>
             <a href="/your-work">Your Work</a>

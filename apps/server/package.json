@@ -7,16 +7,22 @@
   "scripts": {
     "dev": "node dist/index.js",
     "build": "tsc -p tsconfig.json",
+    "seed": "tsx src/scripts/seed-postgres.ts",
     "test": "vitest run --coverage",
     "lint": "echo \"(scaffold) lint not configured yet\"",
-    "e2e": "playwright test --config playwright.config.ts"
+    "e2e": "playwright test --config playwright.config.mjs"
   },
   "dependencies": {
+    "@better-auth/prisma-adapter": "^1.6.9",
     "@hono/node-server": "^1.19.11",
     "@prisma/adapter-pg": "^7.5.0",
     "@trackr/prisma": "0.0.0",
     "@trackr/types": "0.0.0",
+    "better-auth": "^1.6.9",
     "hono": "^4.12.9",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
   }
 }

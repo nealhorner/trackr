@@ -6,6 +6,7 @@ import { getProjectForUser, requireProjectMember } from "../../lib/authz";
 import { prisma } from "../../lib/db";
 import { loadSession, requireAuth } from "../../middleware/session";
 import { authRoutes } from "./auth";
+import { setupRoutes } from "./setup";
 
 function pagination(limitRaw: string | undefined, pageRaw: string | undefined) {
   const limit = Math.min(100, Math.max(1, Number(limitRaw ?? 50) || 50));
@@ -50,6 +51,72 @@ export const v1 = new Hono();
 
 v1.use("*", loadSession);
 v1.route("/auth", authRoutes);
+v1.route("/setup", setupRoutes);
+
+function oauthEnvConfigured() {
+  return {
+    password: true,
+    google: Boolean(
+      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+    ),
+    apple: Boolean(
+      process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET,
+    ),
+    github: Boolean(
+      process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET,
+    ),
+    okta: Boolean(
+      process.env.OKTA_CLIENT_ID &&
+      process.env.OKTA_CLIENT_SECRET &&
+      process.env.OKTA_ISSUER,
+    ),
+  };
+}
+
+v1.get("/public-config", async (c) => {
+  const tenant = await prisma.tenant.findFirst({ orderBy: { id: "asc" } });
+  const envReady = oauthEnvConfigured();
+  if (!tenant || tenant.setupCompleteAt == null) {
+    return jsonOk(c, {
+      setupComplete: false,
+      tenantName: null as string | null,
+      auth: {
+        password: true,
+        google: false,
+        apple: false,
+        github: false,
+        okta: false,
+      },
+      authAvailable: envReady,
+    });
+  }
+  const authSettings = (tenant.authSettings ?? {}) as {
+    password?: boolean;
+    google?: boolean;
+    apple?: boolean;
+    github?: boolean;
+    okta?: boolean;
+  };
+  const auth = {
+    password: authSettings.password ?? true,
+    google: authSettings.google ?? false,
+    apple: authSettings.apple ?? false,
+    github: authSettings.github ?? false,
+    okta: authSettings.okta ?? false,
+  };
+  return jsonOk(c, {
+    setupComplete: true,
+    tenantName: tenant.name,
+    auth,
+    authAvailable: {
+      password: auth.password && envReady.password,
+      google: auth.google && envReady.google,
+      apple: auth.apple && envReady.apple,
+      github: auth.github && envReady.github,
+      okta: auth.okta && envReady.okta,
+    },
+  });
+});
 
 v1.get("/me", requireAuth, (c) => {
   const u = c.get("authUser")!;
@@ -58,6 +125,7 @@ v1.get("/me", requireAuth, (c) => {
       id: u.id,
       email: u.email,
       tenantId: u.tenantId,
+      isTenantAdmin: u.isTenantAdmin,
     },
   });
 });
@@ -67,11 +135,6 @@ v1.get("/organizations", requireAuth, async (c) => {
   const organizations = await prisma.organization.findMany({
     where: {
       tenantId: u.tenantId,
-      projects: {
-        some: {
-          projectMembers: { some: { userId: u.id } },
-        },
-      },
     },
     orderBy: { name: "asc" },
   });

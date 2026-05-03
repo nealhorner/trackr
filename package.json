@@ -17,8 +17,9 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "test": "turbo test",
-    "e2e": "turbo e2e",
-    "dev:e2e": "concurrently -k -n api,web \"npm run dev -w @trackr/server\" \"npx wait-on -t 120000 http://127.0.0.1:3000/health && npm run dev -w @trackr/web\"",
+    "e2e": "turbo e2e --concurrency=1",
+    "dev:e2e": "node scripts/dev-e2e.mjs",
+    "dev:e2e-desktop": "node scripts/dev-e2e-desktop.mjs",
     "check-format": "prettier --check .",
     "format": "prettier --write .",
     "prepare": "husky"

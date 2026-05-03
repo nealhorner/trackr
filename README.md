@@ -24,6 +24,8 @@ This repository contains product and technical planning documents for a platform
 
 ## Documentation
 
+If you want to contribute code or documentation, see the [contribution guide](CONTRIBUTING.md) for setup, quality checks, and how CI validates pull requests.
+
 - [`docs/product-requirements.md`](docs/product-requirements.md)
 - [`docs/technical-requirements.md`](docs/technical-requirements.md)
 - [`docs/mvp-scope.md`](docs/mvp-scope.md)
@@ -160,12 +162,16 @@ npm run e2e
 npm run e2e -w @trackr/server
 ```
 
-When you run E2E from `apps/server`, Playwright starts the server via `webServer` using `npm run dev`, which runs **compiled** output (`node dist/index.js`). **Build the server first** if `apps/server/dist` is missing:
+When you run E2E from `apps/server`, Playwright starts **API + web** via the root script **`npm run dev:e2e`** (API first, then Vite on port 5173). **Build the server first** if `apps/server/dist` is missing:
 
 ```bash
 npm run build -w @trackr/server
-npm run e2e -w @trackr/server
+POSTGRES_DATABASE_URL="postgresql://USER:PASSWORD@127.0.0.1:5432/trackr" npm run e2e -w @trackr/server
 ```
+
+**Onboarding E2E** (`apps/server/e2e/onboarding.spec.ts`) runs a **full setup → login → welcome** flow against the Svelte app. A **global setup** step runs `prisma migrate reset --force --skip-seed` so the instance starts unconfigured — use a dev database you can wipe. Ensure ports **3000** and **5173** are free. To attach to dev servers you already started instead: `REUSE_E2E_SERVERS=1 npm run e2e -w @trackr/server`.
+
+The legacy **HTML shell smoke** test (`ui-shell-smoke.spec.ts`) still hits **port 3000** only.
 
 ### Formatting
 

@@ -1,17 +1,19 @@
 <script lang="ts">
   import { createQuery } from "@tanstack/svelte-query";
 
-  const projectsQuery = createQuery(() => ({
+  type ProjectRow = { id: number; name: string };
+
+  const projectsQuery = createQuery<Array<ProjectRow>>({
     queryKey: ["projects"],
     queryFn: async () => {
       const r = await fetch("/api/v1/projects", { credentials: "include" });
       if (!r.ok) throw new Error("Failed to load projects");
       const j = (await r.json()) as {
-        data: { projects: Array<{ id: number; name: string }> };
+        data: { projects: Array<ProjectRow> };
       };
       return j.data.projects;
     },
-  }));
+  });
 </script>
 
 <h1>Projects</h1>
