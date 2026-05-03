@@ -1,8 +1,10 @@
 use std::fs;
 use std::io::ErrorKind;
+use std::net::{SocketAddr, TcpStream};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::webview::WebviewWindowBuilder;
@@ -166,6 +168,30 @@ fn normalize_remote_url(raw: &str) -> Result<String, String> {
     Ok(s)
 }
 
+/// Poll until `127.0.0.1:port` accepts TCP connections (sidecar HTTP server is listening).
+fn wait_for_sidecar_tcp_ready(port: u16) -> Result<(), String> {
+    let addr: SocketAddr = format!("127.0.0.1:{port}")
+        .parse()
+        .map_err(|e| format!("Invalid sidecar listen address: {e}"))?;
+    const ATTEMPTS: usize = 50;
+    const BACKOFF_MS: u64 = 100;
+    const CONNECT_TIMEOUT: Duration = Duration::from_millis(250);
+    for attempt in 0..ATTEMPTS {
+        match TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT) {
+            Ok(_) => return Ok(()),
+            Err(e) => {
+                if attempt + 1 == ATTEMPTS {
+                    return Err(format!(
+                        "Local API on 127.0.0.1:{port} did not accept connections after {ATTEMPTS} attempts (100ms backoff): {e}"
+                    ));
+                }
+                std::thread::sleep(Duration::from_millis(BACKOFF_MS));
+            }
+        }
+    }
+    unreachable!("wait_for_sidecar_tcp_ready always returns from the loop body")
+}
+
 fn stop_sidecar(state: &State<SidecarState>) {
     if let Ok(mut c) = state.child.lock() {
         if let Some(ref mut ch) = *c {
@@ -270,6 +296,17 @@ fn start_sidecar(app: &AppHandle, state: &State<SidecarState>) -> Result<String,
         .spawn()
         .map_err(|e| format!("Failed to start local API process: {e}"))?;
     *state.child.lock().map_err(|e| e.to_string())? = Some(child);
+
+    if let Err(e) = wait_for_sidecar_tcp_ready(port) {
+        if let Ok(mut c) = state.child.lock() {
+            if let Some(ref mut ch) = *c {
+                let _ = ch.kill();
+            }
+            *c = None;
+        }
+        return Err(e);
+    }
+
     *state.base_url.lock().map_err(|e| e.to_string())? = Some(base_url.clone());
     Ok(base_url)
 }
