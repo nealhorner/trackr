@@ -9,12 +9,12 @@ const prismaCwd = path.join(root, "packages", "prisma");
 const dbDir = fs.mkdtempSync(path.join(os.tmpdir(), "trackr-desktop-api-"));
 const dbPath = path.join(dbDir, "test.sqlite");
 
-process.env.DATABASE_URL = `file:${dbPath}`;
+process.env.SQLITE_DATABASE_URL = `file:${dbPath}`;
 
 beforeAll(async () => {
   execFileSync(
     process.platform === "win32" ? "npx.cmd" : "npx",
-    ["prisma", "db", "push", "--schema", "prisma/sqlite/schema.prisma"],
+    ["prisma", "db", "push", "--config", "prisma.config.sqlite.ts"],
     { cwd: prismaCwd, env: process.env, stdio: "inherit" },
   );
 
