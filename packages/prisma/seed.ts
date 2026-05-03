@@ -20,22 +20,23 @@ async function main() {
     tenant = await prisma.tenant.create({ data: { name: DEFAULT_TENANT } });
   }
 
-  const ensureUser = async (email: string) => {
-    const existing = await prisma.user.findFirst({
+  const ensureAppUser = async (email: string, opts?: { isTenantAdmin?: boolean }) => {
+    const existing = await prisma.appUser.findFirst({
       where: { tenantId: tenant!.id, email },
     });
     if (existing) return existing;
-    return prisma.user.create({
+    return prisma.appUser.create({
       data: {
         tenantId: tenant!.id,
         email,
         emailVerifiedAt: new Date(),
+        isTenantAdmin: opts?.isTenantAdmin ?? false,
       },
     });
   };
 
-  const user1 = await ensureUser("admin@example.com");
-  await ensureUser("dev@example.com");
+  const user1 = await ensureAppUser("admin@example.com", { isTenantAdmin: true });
+  await ensureAppUser("dev@example.com");
 
   let org = await prisma.organization.findFirst({
     where: { tenantId: tenant.id, name: ORG_NAME },
