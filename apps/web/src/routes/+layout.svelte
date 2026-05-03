@@ -1,7 +1,6 @@
 <script lang="ts">
   import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
   import { onMount } from "svelte";
-  import { get } from "svelte/store";
   import { setContext } from "svelte";
 
   import { afterNavigate, goto } from "$app/navigation";
@@ -14,13 +13,15 @@
   setContext("shell", shell);
 
   const bare = ["/login", "/setup"];
-  $: isBare = bare.includes(get(page).url.pathname);
+  $: isBare = bare.includes($page.url.pathname);
 
   let tenantLabel = "Trackr";
 
   async function loadTenantName() {
     try {
-      const r = await fetch("/api/v1/public-config", { credentials: "include" });
+      const r = await fetch("/api/v1/public-config", {
+        credentials: "include",
+      });
       const j = (await r.json()) as {
         data: { tenantName?: string | null; setupComplete: boolean };
       };
@@ -32,23 +33,22 @@
     }
   }
 
-  async function guard() {
+  async function guard(pathname: string) {
     if (typeof window === "undefined") return;
-    const path = get(page).url.pathname as string;
-    if (path === "/login" || path === "/setup") return;
+    if (pathname === "/login" || pathname === "/setup") return;
     const pc = await (
       await fetch("/api/v1/public-config", { credentials: "include" })
     ).json();
     const d = (pc as { data: { setupComplete: boolean } }).data;
     if (!d.setupComplete) {
-      if (path !== "/setup") await goto("/setup");
+      if (pathname !== "/setup") await goto("/setup");
       return;
     }
-    if (path === "/setup" && d.setupComplete) {
+    if (pathname === "/setup" && d.setupComplete) {
       await goto("/");
       return;
     }
-    if (path === "/login" || path === "/setup") return;
+    if (pathname === "/login" || pathname === "/setup") return;
     const me = await fetch("/api/v1/me", { credentials: "include" });
     if (me.status === 401) {
       await goto("/login");
@@ -57,12 +57,12 @@
 
   onMount(() => {
     void loadTenantName();
-    void guard();
+    void guard($page.url.pathname);
   });
 
   afterNavigate(() => {
     void loadTenantName();
-    void guard();
+    void guard($page.url.pathname);
   });
 
   async function signOut() {
