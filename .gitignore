@@ -35,3 +35,12 @@ packages/prisma/.local/
 
 # Tauri
 apps/desktop/src-tauri/gen/schemas/
+
+# Environment variables
+!.env.schema
+.env.local
+.env.*.local
+env.d.ts
+
+# Vitest Varlock coordinator → worker cache
+apps/server/.vitest-cache/

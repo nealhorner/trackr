@@ -1,8 +1,9 @@
 <script lang="ts">
   import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
+  import { onMount } from "svelte";
   import { setContext } from "svelte";
 
-  import { goto } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
 
   import { createShellState } from "$lib/shell";
@@ -11,8 +12,85 @@
   const shell = createShellState();
   setContext("shell", shell);
 
+  const bare = ["/login", "/setup"];
+  $: isBare = bare.includes($page.url.pathname);
+
+  let tenantLabel = "Trackr";
+
+  type PublicConfigPayload = {
+    data: { tenantName?: string | null; setupComplete: boolean };
+  };
+
+  const defaultPublicConfig: PublicConfigPayload = {
+    data: { setupComplete: false },
+  };
+
+  async function fetchPublicConfig(): Promise<PublicConfigPayload> {
+    try {
+      const r = await fetch("/api/v1/public-config", {
+        credentials: "include",
+      });
+      if (!r.ok) {
+        console.error(
+          "[layout] public-config request failed",
+          r.status,
+          r.statusText,
+        );
+        return defaultPublicConfig;
+      }
+      const j = (await r.json()) as PublicConfigPayload;
+      if (!j?.data || typeof j.data.setupComplete !== "boolean") {
+        console.error("[layout] public-config invalid shape", j);
+        return defaultPublicConfig;
+      }
+      return j;
+    } catch (e) {
+      console.error("[layout] public-config fetch error", e);
+      return defaultPublicConfig;
+    }
+  }
+
+  async function loadTenantName() {
+    const j = await fetchPublicConfig();
+    if (j.data.setupComplete && j.data.tenantName) {
+      tenantLabel = j.data.tenantName;
+    }
+  }
+
+  async function guard(pathname: string) {
+    if (typeof window === "undefined") return;
+    if (pathname === "/login") return;
+
+    if (pathname === "/setup") {
+      const d = (await fetchPublicConfig()).data;
+      if (d.setupComplete) await goto("/");
+      return;
+    }
+
+    const d = (await fetchPublicConfig()).data;
+    if (!d.setupComplete) {
+      await goto("/setup");
+      return;
+    }
+
+    const me = await fetch("/api/v1/me", { credentials: "include" });
+    if (me.status === 401) {
+      await goto("/login");
+    }
+  }
+
+  onMount(() => {
+    void loadTenantName();
+    void guard($page.url.pathname);
+  });
+
+  afterNavigate(() => {
+    void loadTenantName();
+    void guard($page.url.pathname);
+  });
+
   async function signOut() {
-    await fetch("/api/v1/auth/logout", {
+    await fetch("/api/auth/sign-out", {
       method: "POST",
       credentials: "include",
     });
@@ -21,7 +99,7 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
-  {#if $page.url.pathname === "/login"}
+  {#if isBare}
     <slot />
   {:else}
     <div class="app-shell">
@@ -49,7 +127,7 @@
 
       <div class="body">
         <aside class="left-nav">
-          <div class="tenant-name">Trackr</div>
+          <div class="tenant-name">{tenantLabel}</div>
           <nav class="nav-sections">
             <a href="/">Home</a>
             <a href="/your-work">Your Work</a>

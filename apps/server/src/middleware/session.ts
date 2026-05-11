@@ -1,45 +1,33 @@
 import { createMiddleware } from "hono/factory";
-import { getCookie } from "hono/cookie";
 
 import { ApiError, getRequestId } from "../lib/api";
+import { auth } from "../lib/betterAuth";
 import { prisma } from "../lib/db";
-import { hashSessionToken } from "../lib/session-crypto";
 
+/** Legacy name kept for imports; Better Auth uses its own cookie names. */
 export const SESSION_COOKIE = "trackr_session";
 
-function extractBearer(c: {
-  req: { header: (n: string) => string | undefined };
-}) {
-  const h = c.req.header("Authorization");
-  if (!h?.startsWith("Bearer ")) return undefined;
-  return h.slice(7).trim();
-}
-
 export const loadSession = createMiddleware(async (c, next) => {
-  const raw = extractBearer(c) ?? getCookie(c, SESSION_COOKIE) ?? undefined;
-  if (!raw) {
+  const s = await auth.api.getSession({ headers: c.req.raw.headers });
+  if (!s?.user?.id) {
     c.set("authUser", null);
     return next();
   }
 
-  const tokenHash = hashSessionToken(raw);
-  const session = await prisma.session.findFirst({
-    where: {
-      tokenHash,
-      expiresAt: { gt: new Date() },
-    },
-    include: { user: true },
+  const appUser = await prisma.appUser.findFirst({
+    where: { authUserId: s.user.id },
   });
 
-  if (!session) {
+  if (!appUser) {
     c.set("authUser", null);
     return next();
   }
 
   c.set("authUser", {
-    id: session.user.id,
-    tenantId: session.user.tenantId,
-    email: session.user.email,
+    id: appUser.id,
+    tenantId: appUser.tenantId,
+    email: appUser.email,
+    isTenantAdmin: appUser.isTenantAdmin,
   });
   await next();
 });

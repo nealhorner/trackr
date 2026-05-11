@@ -18,7 +18,7 @@ export function createShellState(): Readable<ShellState> {
       { label: "Recent", href: "/your-work" },
     ];
 
-    if (path === "/" || path === "") {
+    if (path === "/") {
       return { contextTitle: "Home", tabs: defaultTabs };
     }
     if (path.startsWith("/your-work")) {

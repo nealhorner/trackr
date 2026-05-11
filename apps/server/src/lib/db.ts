@@ -5,7 +5,7 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 /** Matches [packages/prisma/prisma.config.ts](packages/prisma/prisma.config.ts) default. */
 const connectionString =
-  process.env.DATABASE_URL ??
+  process.env.POSTGRES_DATABASE_URL ??
   "postgresql://postgres:postgres@localhost:5432/trackr";
 
 const adapter = new PrismaPg({ connectionString });

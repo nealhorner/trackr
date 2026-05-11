@@ -1,10 +1,50 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 
+import { isLocalOnlyMode } from "./env";
 import { getRequestId, jsonFromUnknown } from "./lib/api";
+import { auth } from "./lib/betterAuth";
 import { v1 } from "./routes/v1/index";
 
 const app = new Hono();
+
+const localOnlyMode = isLocalOnlyMode();
+
+const allowOrigins = new Set([
+  "http://127.0.0.1:3000",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://localhost:5173",
+  "http://127.0.0.1:1420",
+  "http://localhost:1420",
+  "tauri://localhost",
+  "https://tauri.localhost",
+  ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean) ?? []),
+]);
+
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      if (origin && allowOrigins.has(origin)) {
+        return origin;
+      }
+      // In local-only mode keep same-machine UX, but fail closed otherwise.
+      return localOnlyMode ? "http://localhost:5173" : undefined;
+    },
+    credentials: true,
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Trackr-Setup-Token",
+      "Cookie",
+    ],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  }),
+);
 
 app.onError((err, c) => {
   const requestId = getRequestId(c);
@@ -45,6 +85,8 @@ app.get("/", (c) => {
   `;
   return c.body(html, 200, { "Content-Type": "text/html" });
 });
+
+app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.route("/api/v1", v1);
 

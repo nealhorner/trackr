@@ -1,49 +1,103 @@
 <script lang="ts">
   import { QueryClientProvider } from "@tanstack/svelte-query";
+  import { browser } from "$app/environment";
+  import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
+  import { onMount } from "svelte";
+
+  import { getDesktopConfig } from "$lib/api";
   import { shellStateFromPath } from "$lib/shell";
 
   let { data, children } = $props();
   const shell = $derived(shellStateFromPath($page.url.pathname));
+
+  let cfg = $state<Awaited<ReturnType<typeof getDesktopConfig>> | null>(null);
 
   const nav = [
     { href: "/", label: "Home" },
     { href: "/projects", label: "Projects" },
     { href: "/settings", label: "Settings" },
   ];
+
+  const sidebarTitle = $derived.by(() => {
+    if (!cfg) return "Trackr";
+    if (cfg.mode === "local") return cfg.localDisplayName ?? "Trackr local";
+    if (cfg.mode === "remote") return "Trackr (remote)";
+    return "Trackr";
+  });
+
+  async function guardRemoteSession() {
+    if (!browser || !cfg || cfg.mode !== "remote") return;
+    const pathname = $page.url.pathname;
+    if (pathname === "/connect") return;
+    const base = cfg.remoteBaseUrl?.replace(/\/$/, "");
+    if (!base) return;
+    let me: Response;
+    try {
+      me = await fetch(`${base}/api/v1/me`, { credentials: "include" });
+    } catch (err) {
+      console.warn("[guardRemoteSession] /me request failed", err);
+      await goto("/connect");
+      return;
+    }
+    if (me.status === 401) {
+      await goto("/connect");
+    }
+  }
+
+  onMount(async () => {
+    cfg = await getDesktopConfig();
+    await guardRemoteSession();
+  });
+
+  afterNavigate(async () => {
+    cfg = await getDesktopConfig();
+    await guardRemoteSession();
+  });
 </script>
 
-<QueryClientProvider client={data.queryClient}>
-  <div class="app">
-    <aside class="sidebar">
-      <h2>Trackr</h2>
-      {#each nav as item}
-        <a href={item.href} class:active={$page.url.pathname === item.href}>{item.label}</a>
-      {/each}
-    </aside>
+{#if cfg === null}
+  <p class="boot">Starting…</p>
+{:else if cfg.mode === "unset"}
+  {@render children()}
+{:else}
+  <QueryClientProvider client={data.queryClient}>
+    <div class="app">
+      <aside class="sidebar">
+        <h2>{sidebarTitle}</h2>
+        {#each nav as item}
+          <a href={item.href} class:active={$page.url.pathname === item.href}>{item.label}</a>
+        {/each}
+      </aside>
 
-    <main class="main">
-      <header class="topbar">
-        <div>
-          <h1>{shell.contextTitle}</h1>
-          <nav class="tabs">
-            {#each shell.tabs as tab}
-              <a href={tab.href} class:active={$page.url.pathname === tab.href}>
-                {tab.label}
-              </a>
-            {/each}
-          </nav>
-        </div>
-      </header>
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <h1>{shell.contextTitle}</h1>
+            <nav class="tabs">
+              {#each shell.tabs as tab}
+                <a href={tab.href} class:active={$page.url.pathname === tab.href}>
+                  {tab.label}
+                </a>
+              {/each}
+            </nav>
+          </div>
+        </header>
 
-      <section class="content">
-        {@render children()}
-      </section>
-    </main>
-  </div>
-</QueryClientProvider>
+        <section class="content">
+          {@render children()}
+        </section>
+      </main>
+    </div>
+  </QueryClientProvider>
+{/if}
 
 <style>
+  .boot {
+    padding: 2rem;
+    font-family: Inter, system-ui, sans-serif;
+    color: #64748b;
+  }
   :global(body) {
     margin: 0;
     font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
