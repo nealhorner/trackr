@@ -2,32 +2,12 @@ name: CI
 
 on:
   pull_request:
-    branches: ["main"]
   push:
     branches: ["main"]
 
 jobs:
-  test-build:
+  quality:
     runs-on: ubuntu-latest
-    # Service containers start before steps
-    # (e.g. PRs from forks). Must match Postgres service env below.
-    env:
-      CI_PG_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
-      POSTGRES_DATABASE_URL: postgresql://postgres:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/trackr_test
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
-          POSTGRES_DB: trackr_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=10
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +17,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      - name: Load environment variables
+        uses: dmno-dev/varlock-action@v1.0.1
 
       - name: Install dependencies
         run: npm ci
@@ -45,30 +28,17 @@ jobs:
         working-directory: packages/prisma
         run: npm run build
 
-      - name: Migrate and seed Postgres
-        working-directory: packages/prisma
-        run: |
-          npx prisma migrate deploy --config prisma.config.ts
-          npm run seed
+      - name: Check format
+        run: npm run format:check
 
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        env:
-          RUN_INTEGRATION: "true"
-        run: npm run test
+      - name: Test (unit)
+        run: npm run test:unit
 
-      - name: Build (exclude desktop app on generic Linux job)
-        run: npx turbo build --filter=!@trackr/desktop
-
-      - name: Install Playwright browsers
-        run: npx playwright install chromium
-
-      - name: E2E (exclude desktop app on generic Linux job)
-        run: npx turbo e2e --filter=!@trackr/desktop
-
-  desktop-build:
+  build_web_stack:
+    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -79,6 +49,35 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      - name: Load environment variables
+        uses: dmno-dev/varlock-action@v1.0.1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate (Postgres + SQLite clients)
+        working-directory: packages/prisma
+        run: npm run build
+
+      - name: Build web and server
+        run: npx turbo build --filter=@trackr/web --filter=@trackr/server
+
+  build_desktop:
+    needs: [quality]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Load environment variables
+        uses: dmno-dev/varlock-action@v1.0.1
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -107,3 +106,63 @@ jobs:
       - name: Build desktop app
         working-directory: apps/desktop
         run: npm run build
+
+  integration_and_e2e:
+    needs: [quality, build_web_stack, build_desktop]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: trackr_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Load environment variables
+        uses: dmno-dev/varlock-action@v1.0.1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate (Postgres + SQLite clients)
+        working-directory: packages/prisma
+        run: npm run build
+
+      - name: Migrate and seed Postgres
+        working-directory: packages/prisma
+        run: |
+          npx prisma migrate deploy --config prisma.config.ts
+          npm run seed
+
+      - name: Server integration tests (Vitest)
+        run: npm run test:integration
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: E2E (full suite)
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main') }}
+        run: npx turbo e2e --filter=!@trackr/desktop
+
+      - name: E2E (changed only, PR base not main)
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'main'
+        working-directory: apps/server
+        run: npx playwright test --only-changed=${{ github.event.pull_request.base.sha }}

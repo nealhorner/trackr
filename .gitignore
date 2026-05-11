@@ -41,3 +41,6 @@ apps/desktop/src-tauri/gen/schemas/
 .env.local
 .env.*.local
 env.d.ts
+
+# Vitest Varlock coordinator → worker cache
+apps/server/.vitest-cache/
